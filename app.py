@@ -1,11 +1,7 @@
 import streamlit as st
-from langchain.llms import Anthropic
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
-from config import get_anthropic_api_key, MAX_TOKENS, TEMPERATURE, MODEL_NAME
+import logging
 import hashlib
 import uuid
-import logging
 
 # Configure logging
 logging.basicConfig(filename='phishing_generator.log', level=logging.INFO, 
@@ -43,14 +39,30 @@ st.markdown("""
 # Initialize Anthropic LLM
 @st.cache_resource
 def get_llm():
-    return Anthropic(
-        model=MODEL_NAME,
-        anthropic_api_key=get_anthropic_api_key(),
-        max_tokens_to_sample=MAX_TOKENS,
-        temperature=TEMPERATURE,
-    )
+    try:
+        from langchain.llms import Anthropic
+        from langchain.prompts import PromptTemplate
+        from langchain.chains import LLMChain
+        from config import get_anthropic_api_key, MAX_TOKENS, TEMPERATURE, MODEL_NAME
+
+        return Anthropic(
+            model=MODEL_NAME,
+            anthropic_api_key=get_anthropic_api_key(),
+            max_tokens_to_sample=MAX_TOKENS,
+            temperature=TEMPERATURE,
+        )
+    except ImportError as e:
+        st.error(f"Failed to import required libraries: {str(e)}")
+        st.error("Please make sure you have installed all required packages.")
+        return None
+    except Exception as e:
+        st.error(f"An error occurred while initializing the LLM: {str(e)}")
+        return None
 
 llm = get_llm()
+
+if llm is None:
+    st.stop()
 
 # Define the prompt template
 prompt_template = PromptTemplate(
@@ -73,8 +85,12 @@ prompt_template = PromptTemplate(
     """
 )
 
-# Create the LangChain
-email_chain = LLMChain(llm=llm, prompt=prompt_template)
+# Create the LLMChain
+try:
+    email_chain = LLMChain(llm=llm, prompt=prompt_template)
+except Exception as e:
+    st.error(f"Failed to create LLMChain: {str(e)}")
+    st.stop()
 
 # Anonymization function
 def anonymize_input(input_text):
@@ -94,36 +110,40 @@ difficulty = st.selectbox("Select the difficulty level:", ["Easy", "Medium", "Ha
 
 if st.button("Generate Phishing Email"):
     if context and client_name:
-        with st.spinner("Generating phishing email..."):
-            # Anonymize inputs for logging
-            anon_context = anonymize_input(context)
-            anon_client = anonymize_input(client_name)
-            
-            # Log anonymized usage
-            logging.info(f"Session ID: {st.session_state['session_id']}, Client: {anon_client}, Context: {anon_context}, Difficulty: {difficulty}")
-            
-            result = email_chain.run(context=context, difficulty=difficulty, client=client_name)
-            
-            # Parse and display results
-            sections = result.split("\n\n")
-            subject = sections[0].replace("Subject line: ", "")
-            sender = sections[1].replace("Sender: ", "")
-            body = sections[2]
-            indicators = sections[3].split("\n")[1:]
-            explanation = sections[4].split("\n")[1:]
-            
-            st.subheader("Generated Phishing Email")
-            st.text(f"From: {sender}")
-            st.text(f"Subject: {subject}")
-            st.text_area("Email Body:", value=body, height=200)
-            
-            st.subheader("Phishing Indicators")
-            for indicator in indicators:
-                st.markdown(f"- {indicator}")
-            
-            st.subheader("Explanation")
-            for point in explanation:
-                st.markdown(f"- {point}")
+        try:
+            with st.spinner("Generating phishing email..."):
+                # Anonymize inputs for logging
+                anon_context = anonymize_input(context)
+                anon_client = anonymize_input(client_name)
+                
+                # Log anonymized usage
+                logging.info(f"Session ID: {st.session_state['session_id']}, Client: {anon_client}, Context: {anon_context}, Difficulty: {difficulty}")
+                
+                result = email_chain.run(context=context, difficulty=difficulty, client=client_name)
+                
+                # Parse and display results
+                sections = result.split("\n\n")
+                subject = sections[0].replace("Subject line: ", "")
+                sender = sections[1].replace("Sender: ", "")
+                body = sections[2]
+                indicators = sections[3].split("\n")[1:]
+                explanation = sections[4].split("\n")[1:]
+                
+                st.subheader("Generated Phishing Email")
+                st.text(f"From: {sender}")
+                st.text(f"Subject: {subject}")
+                st.text_area("Email Body:", value=body, height=200)
+                
+                st.subheader("Phishing Indicators")
+                for indicator in indicators:
+                    st.markdown(f"- {indicator}")
+                
+                st.subheader("Explanation")
+                for point in explanation:
+                    st.markdown(f"- {point}")
+        except Exception as e:
+            st.error(f"An error occurred while generating the email: {str(e)}")
+            logging.error(f"Error generating email: {str(e)}")
     else:
         st.warning("Please provide both client name and context for the phishing email.")
 
