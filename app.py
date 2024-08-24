@@ -36,25 +36,27 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Import required modules
+try:
+    from langchain.llms import Anthropic
+    from langchain_core.prompts import PromptTemplate
+    from langchain.chains import LLMChain
+    from config import get_anthropic_api_key, MAX_TOKENS, TEMPERATURE, MODEL_NAME
+except ImportError as e:
+    st.error(f"Failed to import required libraries: {str(e)}")
+    st.error("Please make sure you have installed all required packages.")
+    st.stop()
+
 # Initialize Anthropic LLM
 @st.cache_resource
 def get_llm():
     try:
-        from langchain.llms import Anthropic
-        from langchain.prompts import PromptTemplate
-        from langchain.chains import LLMChain
-        from config import get_anthropic_api_key, MAX_TOKENS, TEMPERATURE, MODEL_NAME
-
         return Anthropic(
             model=MODEL_NAME,
             anthropic_api_key=get_anthropic_api_key(),
             max_tokens_to_sample=MAX_TOKENS,
             temperature=TEMPERATURE,
         )
-    except ImportError as e:
-        st.error(f"Failed to import required libraries: {str(e)}")
-        st.error("Please make sure you have installed all required packages.")
-        return None
     except Exception as e:
         st.error(f"An error occurred while initializing the LLM: {str(e)}")
         return None
