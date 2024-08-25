@@ -5,5 +5,4 @@ python-dotenv
 langchain-community
 anthropic
 langchain_anthropic
-streamlit-antd
 streamlit-antd-components
