@@ -3,7 +3,7 @@ import streamlit_antd_components as sac
 from config import get_config, update_config, reset_to_defaults, DEFAULT_CONFIG
 
 def render_main_page():
-    with sac.tabs([
+    with sac.Tabs([
         sac.TabsItem(label='Generator', icon='robot'),
         sac.TabsItem(label='Instellingen', icon='gear')
     ]):
