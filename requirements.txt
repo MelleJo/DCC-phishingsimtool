@@ -5,4 +5,4 @@ python-dotenv
 langchain-community
 anthropic
 langchain_anthropic
-streamlit-antd==0.1.0
+streamlit-antd
