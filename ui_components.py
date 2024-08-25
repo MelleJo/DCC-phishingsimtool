@@ -43,7 +43,7 @@ def display_business_categories():
             try:
                 add_business_type(new_category, new_business_type)
                 st.success(f"Bedrijfstype '{new_business_type}' toegevoegd aan categorie '{new_category}'")
-                st.experimental_rerun()
+                st.rerun()
             except Exception as e:
                 st.error(f"Fout bij het toevoegen van het nieuwe bedrijfstype: {str(e)}")
 
