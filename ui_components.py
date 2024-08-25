@@ -51,14 +51,11 @@ def display_business_categories():
 
 def display_internal_external_selection():
     st.subheader("Selecteer het type e-mail")
-    return sac.buttons(
-        items=[
-            sac.ButtonsItem(label="Intern", description="E-mail van een collega of leidinggevende"),
-            sac.ButtonsItem(label="Extern", description="E-mail van een klant, overheid, IT-provider, etc.")
-        ],
-        format_func="title",
-        return_index=False,
-        key="internal_external_buttons"
+    return st.radio(
+        "E-mail type",
+        ["Intern", "Extern"],
+        format_func=lambda x: f"{x} - {'E-mail van een collega of leidinggevende' if x == 'Intern' else 'E-mail van een klant, overheid, IT-provider, etc.'}",
+        key="internal_external_radio"
     )
 
 def display_context_questions(questions):
