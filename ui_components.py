@@ -16,7 +16,7 @@ def render_main_page():
             sac.StepsItem(title='Input', description='Voer de context en het moeilijkheidsniveau in', icon='pencil'),
             sac.StepsItem(title='Generatie', description='De AI genereert een phishing simulatie e-mail', icon='gear'),
             sac.StepsItem(title='Resultaat', description='Bekijk de gegenereerde e-mail en phishing-indicatoren', icon='check')
-        ], active=1)
+        ])
 
         return context, difficulty
     elif tab == 'Instellingen':
