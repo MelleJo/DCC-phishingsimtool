@@ -1,7 +1,7 @@
 import streamlit as st
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage
-from config import get_anthropic_api_key, MAX_TOKENS, TEMPERATURE, MODEL_NAME
+from config import get_anthropic_api_key, get_model_name, get_max_tokens, get_temperature
 import logging
 
 # Initialize ChatAnthropic
@@ -9,10 +9,10 @@ import logging
 def get_chat_anthropic():
     try:
         return ChatAnthropic(
-            model=MODEL_NAME,
+            model=get_model_name(),
             anthropic_api_key=get_anthropic_api_key(),
-            max_tokens_to_sample=MAX_TOKENS,
-            temperature=TEMPERATURE,
+            max_tokens_to_sample=get_max_tokens(),
+            temperature=get_temperature(),
         )
     except Exception as e:
         st.error(f"Er is een fout opgetreden bij het initialiseren van ChatAnthropic: {str(e)}")
