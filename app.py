@@ -31,7 +31,7 @@ def main():
     # Step 1: Business Type Selection
     if st.session_state.step == 1:
         st.session_state.business_type = display_business_categories()
-        if st.session_state.business_type:
+        if st.session_state.business_type and st.button("Bevestig Bedrijfstype", key="confirm_business_type"):
             log_step("Business Type Selection", st.session_state.business_type)
             st.session_state.step = 2
             st.rerun()
@@ -40,7 +40,7 @@ def main():
     elif st.session_state.step == 2:
         st.write(f"Geselecteerd bedrijfstype: {st.session_state.business_type}")
         st.session_state.internal_external = display_internal_external_selection()
-        if st.session_state.internal_external:
+        if st.session_state.internal_external and st.button("Bevestig E-mailtype", key="confirm_email_type"):
             log_step("Internal/External Selection", st.session_state.internal_external)
             st.session_state.step = 3
             st.rerun()
@@ -60,9 +60,12 @@ def main():
         st.session_state.context_answers = display_context_questions(st.session_state.context_questions)
         
         if st.button("Onderzoek Starten", key="start_research_button"):
-            log_step("Context Questions", st.session_state.context_answers)
-            st.session_state.step = 4
-            st.rerun()
+            if all(st.session_state.context_answers.values()):
+                log_step("Context Questions", st.session_state.context_answers)
+                st.session_state.step = 4
+                st.rerun()
+            else:
+                st.warning("Beantwoord alle vragen voordat je doorgaat.")
 
     # Step 4: Conduct Research and Display Results
     elif st.session_state.step == 4:
