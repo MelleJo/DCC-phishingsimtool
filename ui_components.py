@@ -4,9 +4,15 @@ from streamlit_antd.cards import Action, Item, st_antd_cards
 from streamlit_antd.steps import Item as StepItem, st_antd_steps
 
 def render_main_page():
-    tab_event = st_antd_tabs([{"Label": "Generator"}, {"Label": "Instructies"}], key="main_tabs")
+    tabs = [{"Label": "Generator"}, {"Label": "Instructies"}]
+    tab_event = st_antd_tabs(tabs, key="main_tabs")
+    
+    # Default to "Generator" tab if no event is returned
+    active_tab = "Generator"
+    if tab_event and isinstance(tab_event, dict) and "payload" in tab_event:
+        active_tab = tab_event["payload"].get("Label", "Generator")
 
-    if tab_event["payload"]["Label"] == "Generator":
+    if active_tab == "Generator":
         context = st.text_area("Voer de context in voor de phishing e-mail (bijv. bedrijfsspecifieke informatie, industrie, actuele gebeurtenissen):", height=150)
         difficulty = st.selectbox("Selecteer het moeilijkheidsniveau:", ["Makkelijk", "Gemiddeld", "Moeilijk"])
 
@@ -19,11 +25,15 @@ def render_main_page():
         st_antd_steps(steps, current=1, direction="horizontal")
 
         return context, difficulty
-    elif tab_event["payload"]["Label"] == "Instructies":
-        st.write("Hier kunt u instructies toevoegen over hoe de phishing simulatie e-mail generator te gebruiken.")
+    elif active_tab == "Instructies":
+        st.write("Hier kunt u instructies toevoegen over hoe de DCC Phishing Simulatie Tool te gebruiken.")
         return None, None
 
 def display_generated_email(result):
+    if not result:
+        st.error("Er is geen e-mail gegenereerd om weer te geven.")
+        return
+
     sections = result.split("\n\n")
     subject = next((s for s in sections if s.startswith("Onderwerpregel:")), "").replace("Onderwerpregel:", "").strip()
     sender = next((s for s in sections if s.startswith("Afzender:")), "").replace("Afzender:", "").strip()
