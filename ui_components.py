@@ -35,12 +35,10 @@ def display_generated_email(result):
     indicators = next((s for s in sections if s.startswith("Phishing-indicatoren:")), "").split("\n")[1:]
     explanation = next((s for s in sections if s.startswith("Uitleg:")), "").split("\n")[1:]
 
-    sac.alert(
-        title=f"Onderwerp: {subject}",
-        description=f"Van: {sender}\n\n{body}",
-        color="blue",
-        icon="info",
-    )
+    st.subheader("Gegenereerde Phishing E-mail")
+    st.markdown(f"**Onderwerp:** {subject}")
+    st.markdown(f"**Van:** {sender}")
+    st.text_area("E-mailtekst:", value=body, height=200, disabled=True)
 
     st.subheader("Phishing-indicatoren")
     for indicator in indicators:
