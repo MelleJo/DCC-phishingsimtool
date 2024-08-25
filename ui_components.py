@@ -1,6 +1,7 @@
 import streamlit as st
 import streamlit_antd_components as sac
 from config import get_config, update_config, reset_to_defaults, DEFAULT_CONFIG
+import html
 
 def render_main_page():
     tab = sac.tabs([
@@ -36,6 +37,10 @@ def display_generated_email(result, debug_info):
         indicators = next((s for s in sections if s.startswith("Phishing-indicatoren:")), "").split("\n")[1:]
         explanation = next((s for s in sections if s.startswith("Uitleg:")), "").split("\n")[1:]
 
+        # Escape the sender information
+        sender_name, sender_email = sender.split(" ", 1) if " " in sender else (sender, "")
+        sender_email = sender_email.strip("<>")
+
         st.markdown("""
         <style>
         .email-container {
@@ -69,11 +74,11 @@ def display_generated_email(result, debug_info):
         st.markdown(f"""
         <div class="email-container">
             <div class="email-header">
-                <div class="email-subject">{subject}</div>
-                <div class="email-sender">Van: {sender}</div>
+                <div class="email-subject">{html.escape(subject)}</div>
+                <div class="email-sender">Van: {html.escape(sender_name)} &lt;{html.escape(sender_email)}&gt;</div>
             </div>
             <div class="email-body">
-                {body.replace('\n', '<br>')}
+                {html.escape(body).replace(chr(10), '<br>')}
             </div>
         </div>
         """, unsafe_allow_html=True)
