@@ -1,4 +1,6 @@
 import streamlit as st
+from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import HumanMessage, AIMessage
 import logging
 import hashlib
 import uuid
@@ -36,63 +38,58 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Import required modules
-try:
-    from langchain.llms import Anthropic
-    from langchain_core.prompts import PromptTemplate
-    from langchain.chains import LLMChain
-    from config import get_anthropic_api_key, MAX_TOKENS, TEMPERATURE, MODEL_NAME
-except ImportError as e:
-    st.error(f"Failed to import required libraries: {str(e)}")
-    st.error("Please make sure you have installed all required packages.")
-    st.stop()
+# Import configuration
+from config import get_anthropic_api_key, MAX_TOKENS, TEMPERATURE, MODEL_NAME
 
-# Initialize Anthropic LLM
+# Initialize ChatAnthropic
 @st.cache_resource
-def get_llm():
+def get_chat_anthropic():
     try:
-        return Anthropic(
+        return ChatAnthropic(
             model=MODEL_NAME,
             anthropic_api_key=get_anthropic_api_key(),
             max_tokens_to_sample=MAX_TOKENS,
             temperature=TEMPERATURE,
         )
     except Exception as e:
-        st.error(f"An error occurred while initializing the LLM: {str(e)}")
+        st.error(f"An error occurred while initializing ChatAnthropic: {str(e)}")
         return None
 
-llm = get_llm()
+chat = get_chat_anthropic()
 
-if llm is None:
+if chat is None:
     st.stop()
 
 # Define the prompt template
-prompt_template = PromptTemplate(
-    input_variables=["context", "difficulty", "client"],
-    template="""
-    Create a phishing simulation email based on the following context: {context}
-    
-    The email should be at a {difficulty} difficulty level.
-    This is for a phishing simulation for client: {client}
-    
-    Please provide the following:
-    1. Subject line
-    2. Sender name and email address
-    3. Full email body
-    4. List of phishing indicators in the email
-    5. Explanation of why these indicators are suspicious
-    
-    Ensure the email is realistic and incorporates common phishing tactics appropriate for the specified difficulty level.
-    Do not include any real names, email addresses, or identifiable information in the generated content.
-    """
-)
+PROMPT_TEMPLATE = """
+Create a phishing simulation email based on the following context: {context}
 
-# Create the LLMChain
-try:
-    email_chain = LLMChain(llm=llm, prompt=prompt_template)
-except Exception as e:
-    st.error(f"Failed to create LLMChain: {str(e)}")
-    st.stop()
+The email should be at a {difficulty} difficulty level.
+This is for a phishing simulation for client: {client}
+
+Please provide the following:
+1. Subject line
+2. Sender name and email address
+3. Full email body
+4. List of phishing indicators in the email
+5. Explanation of why these indicators are suspicious
+
+Ensure the email is realistic and incorporates common phishing tactics appropriate for the specified difficulty level.
+Do not include any real names, email addresses, or identifiable information in the generated content.
+"""
+
+# Function to generate email
+def generate_email(context, difficulty, client):
+    try:
+        messages = [
+            HumanMessage(content=PROMPT_TEMPLATE.format(context=context, difficulty=difficulty, client=client))
+        ]
+        response = chat.invoke(messages)
+        return response.content
+    except Exception as e:
+        st.error(f"An error occurred while generating the email: {str(e)}")
+        logging.error(f"Error generating email: {str(e)}")
+        return None
 
 # Anonymization function
 def anonymize_input(input_text):
@@ -112,24 +109,24 @@ difficulty = st.selectbox("Select the difficulty level:", ["Easy", "Medium", "Ha
 
 if st.button("Generate Phishing Email"):
     if context and client_name:
-        try:
-            with st.spinner("Generating phishing email..."):
-                # Anonymize inputs for logging
-                anon_context = anonymize_input(context)
-                anon_client = anonymize_input(client_name)
-                
-                # Log anonymized usage
-                logging.info(f"Session ID: {st.session_state['session_id']}, Client: {anon_client}, Context: {anon_context}, Difficulty: {difficulty}")
-                
-                result = email_chain.run(context=context, difficulty=difficulty, client=client_name)
-                
+        with st.spinner("Generating phishing email..."):
+            # Anonymize inputs for logging
+            anon_context = anonymize_input(context)
+            anon_client = anonymize_input(client_name)
+            
+            # Log anonymized usage
+            logging.info(f"Session ID: {st.session_state['session_id']}, Client: {anon_client}, Context: {anon_context}, Difficulty: {difficulty}")
+            
+            result = generate_email(context, difficulty, client_name)
+            
+            if result:
                 # Parse and display results
                 sections = result.split("\n\n")
-                subject = sections[0].replace("Subject line: ", "")
-                sender = sections[1].replace("Sender: ", "")
-                body = sections[2]
-                indicators = sections[3].split("\n")[1:]
-                explanation = sections[4].split("\n")[1:]
+                subject = next((s for s in sections if s.startswith("Subject line:")), "").replace("Subject line:", "").strip()
+                sender = next((s for s in sections if s.startswith("Sender:")), "").replace("Sender:", "").strip()
+                body = next((s for s in sections if not s.startswith(("Subject line:", "Sender:", "Phishing Indicators:", "Explanation:"))), "")
+                indicators = next((s for s in sections if s.startswith("Phishing Indicators:")), "").split("\n")[1:]
+                explanation = next((s for s in sections if s.startswith("Explanation:")), "").split("\n")[1:]
                 
                 st.subheader("Generated Phishing Email")
                 st.text(f"From: {sender}")
@@ -143,9 +140,6 @@ if st.button("Generate Phishing Email"):
                 st.subheader("Explanation")
                 for point in explanation:
                     st.markdown(f"- {point}")
-        except Exception as e:
-            st.error(f"An error occurred while generating the email: {str(e)}")
-            logging.error(f"Error generating email: {str(e)}")
     else:
         st.warning("Please provide both client name and context for the phishing email.")
 
