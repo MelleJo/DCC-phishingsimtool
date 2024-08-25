@@ -23,67 +23,88 @@ def render_main_page():
         render_settings()
         return None, None
 
-def display_generated_email(result):
+def display_generated_email(result, debug_info):
     if not result:
         st.error("Er is geen e-mail gegenereerd om weer te geven.")
         return
 
-    sections = result.split("\n\n")
-    subject = next((s for s in sections if s.startswith("Onderwerpregel:")), "").replace("Onderwerpregel:", "").strip()
-    sender = next((s for s in sections if s.startswith("Afzender:")), "").replace("Afzender:", "").strip()
-    body = next((s for s in sections if not s.startswith(("Onderwerpregel:", "Afzender:", "Phishing-indicatoren:", "Uitleg:"))), "")
-    indicators = next((s for s in sections if s.startswith("Phishing-indicatoren:")), "").split("\n")[1:]
-    explanation = next((s for s in sections if s.startswith("Uitleg:")), "").split("\n")[1:]
+    try:
+        sections = result.split("\n\n")
+        subject = next((s for s in sections if s.startswith("Onderwerpregel:")), "").replace("Onderwerpregel:", "").strip()
+        sender = next((s for s in sections if s.startswith("Afzender:")), "").replace("Afzender:", "").strip()
+        body = next((s for s in sections if not s.startswith(("Onderwerpregel:", "Afzender:", "Phishing-indicatoren:", "Uitleg:"))), "")
+        indicators = next((s for s in sections if s.startswith("Phishing-indicatoren:")), "").split("\n")[1:]
+        explanation = next((s for s in sections if s.startswith("Uitleg:")), "").split("\n")[1:]
 
-    st.markdown("""
-    <style>
-    .email-container {
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        padding: 20px;
-        background-color: #f9f9f9;
-        font-family: Arial, sans-serif;
-    }
-    .email-header {
-        border-bottom: 1px solid #eee;
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-    }
-    .email-subject {
-        font-size: 18px;
-        font-weight: bold;
-    }
-    .email-sender {
-        color: #666;
-        margin-top: 5px;
-    }
-    .email-body {
-        background-color: white;
-        padding: 15px;
-        border-radius: 5px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+        st.markdown("""
+        <style>
+        .email-container {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            font-family: Arial, sans-serif;
+        }
+        .email-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .email-subject {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .email-sender {
+            color: #666;
+            margin-top: 5px;
+        }
+        .email-body {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
-    st.markdown(f"""
-    <div class="email-container">
-        <div class="email-header">
-            <div class="email-subject">{subject}</div>
-            <div class="email-sender">Van: {sender}</div>
+        st.markdown(f"""
+        <div class="email-container">
+            <div class="email-header">
+                <div class="email-subject">{subject}</div>
+                <div class="email-sender">Van: {sender}</div>
+            </div>
+            <div class="email-body">
+                {body.replace('\n', '<br>')}
+            </div>
         </div>
-        <div class="email-body">
-            {body.replace('\n', '<br>')}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-    st.subheader("Phishing-indicatoren")
-    for indicator in indicators:
-        st.markdown(f"- {indicator}")
+        st.subheader("Phishing-indicatoren")
+        for indicator in indicators:
+            st.markdown(f"- {indicator}")
 
-    st.subheader("Uitleg")
-    for point in explanation:
-        st.markdown(f"- {point}")
+        st.subheader("Uitleg")
+        for point in explanation:
+            st.markdown(f"- {point}")
+
+        # Expandable debug field
+        with st.expander("Debug Informatie"):
+            st.subheader("Claude 3.5 Sonnet Request")
+            st.json(debug_info['sonnet_request'])
+            st.subheader("Claude 3.5 Sonnet Response")
+            st.json(debug_info['sonnet_response'])
+            st.subheader("Tavily Search Requests")
+            for i, request in enumerate(debug_info['tavily_requests'], 1):
+                st.write(f"Request {i}:")
+                st.json(request)
+            st.subheader("Tavily Search Responses")
+            for i, response in enumerate(debug_info['tavily_responses'], 1):
+                st.write(f"Response {i}:")
+                st.json(response)
+
+    except Exception as e:
+        st.error(f"Er is een fout opgetreden bij het weergeven van de e-mail: {str(e)}")
+        st.write("Ruwe e-mail inhoud:")
+        st.write(result)
 
 def render_settings():
     config = get_config()

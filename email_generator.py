@@ -71,27 +71,41 @@ Richtlijnen voor het maken van een realistische phishing-simulatie:
 """
 
 def generate_phishing_email(context, difficulty):
+    debug_info = {
+        'sonnet_request': {},
+        'sonnet_response': {},
+        'tavily_requests': [],
+        'tavily_responses': []
+    }
+    
     try:
         # Get authentic information
-        website = get_authentic_info(context, 'website')
-        email = get_authentic_info(context, 'email')
-        person = get_authentic_info(context, 'person')
+        website, website_debug = get_authentic_info(context, 'website')
+        email, email_debug = get_authentic_info(context, 'email')
+        person, person_debug = get_authentic_info(context, 'person')
 
-        messages = [
-            HumanMessage(content=PROMPT_TEMPLATE.format(
-                context=context, 
-                difficulty=difficulty,
-                website=website,
-                email=email,
-                person=person
-            ))
-        ]
-        st.write("Debug - Sending request to API")  # Debug output
+        debug_info['tavily_requests'].extend([website_debug['request'], email_debug['request'], person_debug['request']])
+        debug_info['tavily_responses'].extend([website_debug['response'], email_debug['response'], person_debug['response']])
+
+        prompt = PROMPT_TEMPLATE.format(
+            context=context, 
+            difficulty=difficulty,
+            website=website,
+            email=email,
+            person=person
+        )
+        
+        messages = [HumanMessage(content=prompt)]
+        
+        debug_info['sonnet_request'] = {'messages': [m.content for m in messages]}
+        
         response = chat.invoke(messages)
-        st.write("Debug - Raw API Response:", response.content)  # Debug output
-        return response.content
+        
+        debug_info['sonnet_response'] = {'content': response.content}
+        
+        return response.content, debug_info
     except Exception as e:
         st.error(f"Er is een fout opgetreden bij het genereren van de e-mail: {str(e)}")
         logging.error(f"Fout bij het genereren van e-mail: {str(e)}")
-        st.write("Debug - Exception details:", str(e))  # Debug output
-        return None
+        st.write("Debug - Exception details:", str(e))
+        return None, debug_info

@@ -25,12 +25,13 @@ def main():
         if st.button("Genereer Phishing E-mail"):
             if context:
                 with st.spinner("Phishing e-mail wordt gegenereerd..."):
-                    result = generate_phishing_email(context, difficulty)
+                    result, debug_info = generate_phishing_email(context, difficulty)
                     if result:
                         st.session_state['generated_email'] = result
-                        display_generated_email(result)
+                        display_generated_email(result, debug_info)
                     else:
                         st.error("Er is geen resultaat ontvangen van de API.")
+                        st.json(debug_info)  # Display debug info on error
             else:
                 st.warning("Voer alstublieft de context in voor de phishing e-mail.")
 
