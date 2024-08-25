@@ -6,4 +6,4 @@ langchain-community
 anthropic
 langchain_anthropic
 streamlit-antd-components
-tavily
+tavily-python
