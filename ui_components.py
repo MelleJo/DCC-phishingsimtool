@@ -89,32 +89,48 @@ def display_email_ideas(ideas):
 def display_generated_emails(emails):
     for i, email in enumerate(emails, 1):
         with st.expander(f"Gegenereerde E-mail {i}", expanded=True):
-            lines = email.split('\n')
-            subject = next((line[9:-10] for line in lines if line.startswith('<subject>')), "")
-            sender = next((line[8:-9] for line in lines if line.startswith('<sender>')), "")
-            body = '\n'.join(lines[lines.index('<body>')+1:lines.index('</body>')])
-            indicators = lines[lines.index('<indicators>')+1:lines.index('</indicators>')]
-            explanation = '\n'.join(lines[lines.index('<explanation>')+1:lines.index('</explanation>')])
+            try:
+                # Find the indices of the tags
+                subject_start = email.find('<subject>') + 9
+                subject_end = email.find('</subject>')
+                sender_start = email.find('<sender>') + 8
+                sender_end = email.find('</sender>')
+                body_start = email.find('<body>') + 6
+                body_end = email.find('</body>')
+                indicators_start = email.find('<indicators>') + 12
+                indicators_end = email.find('</indicators>')
+                explanation_start = email.find('<explanation>') + 13
+                explanation_end = email.find('</explanation>')
 
-            st.markdown(f"**Onderwerp:** {subject}")
-            st.markdown(f"**Afzender:** {sender}")
-            st.text_area("E-mailinhoud:", value=body, height=200, key=f"email_body_{i}")
-            
-            st.subheader("Phishing-indicatoren:")
-            for indicator in indicators:
-                st.markdown(f"- {indicator}")
-            
-            st.subheader("Uitleg:")
-            st.write(explanation)
+                # Extract the content
+                subject = email[subject_start:subject_end] if subject_start > 8 and subject_end != -1 else "Geen onderwerp"
+                sender = email[sender_start:sender_end] if sender_start > 7 and sender_end != -1 else "Onbekende afzender"
+                body = email[body_start:body_end] if body_start > 5 and body_end != -1 else "Geen inhoud"
+                indicators = email[indicators_start:indicators_end].split('\n') if indicators_start > 11 and indicators_end != -1 else []
+                explanation = email[explanation_start:explanation_end] if explanation_start > 12 and explanation_end != -1 else "Geen uitleg beschikbaar"
 
-            if st.button(f"Download E-mail {i}", key=f"download_email_{i}"):
-                email_content = f"Onderwerp: {subject}\nAfzender: {sender}\n\n{body}\n\nPhishing-indicatoren:\n"
-                email_content += '\n'.join(indicators)
-                email_content += f"\n\nUitleg:\n{explanation}"
-                st.download_button(
-                    label=f"Download E-mail {i} als tekstbestand",
-                    data=email_content,
-                    file_name=f"phishing_email_{i}.txt",
-                    mime="text/plain",
-                    key=f"download_button_{i}"
-                )
+                st.markdown(f"**Onderwerp:** {subject}")
+                st.markdown(f"**Afzender:** {sender}")
+                st.text_area("E-mailinhoud:", value=body, height=200, key=f"email_body_{i}")
+                
+                st.subheader("Phishing-indicatoren:")
+                for indicator in indicators:
+                    if indicator.strip():
+                        st.markdown(f"- {indicator.strip()}")
+                
+                st.subheader("Uitleg:")
+                st.write(explanation)
+
+                if st.button(f"Download E-mail {i}", key=f"download_email_{i}"):
+                    email_content = f"Onderwerp: {subject}\nAfzender: {sender}\n\n{body}\n\nPhishing-indicatoren:\n"
+                    email_content += '\n'.join(indicators)
+                    email_content += f"\n\nUitleg:\n{explanation}"
+                    st.download_button(
+                        label=f"Download E-mail {i} als tekstbestand",
+                        data=email_content,
+                        file_name=f"phishing_email_{i}.txt",
+                        mime="text/plain",
+                        key=f"download_button_{i}"
+                    )
+            except Exception as e:
+                st.error(f"Er is een fout opgetreden bij het weergeven van e-mail {i}: {str(e)}")
