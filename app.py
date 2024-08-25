@@ -1,16 +1,16 @@
 import streamlit as st
+import logging
+import uuid
 from ui_components import render_main_page, render_debug_info, display_generated_email
 from email_generator import generate_phishing_email
 from config import get_anthropic_api_key, get_model_name, get_max_tokens, get_temperature
-import logging
-import uuid
+
+# Set page configuration
+st.set_page_config(page_title="DCC Phishing Simulatie Tool", layout="wide")
 
 # Configure logging
 logging.basicConfig(filename='phishing_generator.log', level=logging.INFO, 
                     format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
-
-# Set page configuration
-st.set_page_config(page_title="DCC Phishing Simulatie Tool", layout="wide")
 
 # Generate unique session ID
 if 'session_id' not in st.session_state:
