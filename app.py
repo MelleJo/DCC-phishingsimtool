@@ -1,7 +1,7 @@
 import streamlit as st
 from ui_components import render_main_page, render_debug_info, display_generated_email
 from email_generator import generate_phishing_email
-from config import get_anthropic_api_key, MAX_TOKENS, TEMPERATURE, MODEL_NAME
+from config import get_anthropic_api_key, get_model_name, get_max_tokens, get_temperature
 import logging
 import uuid
 
@@ -35,7 +35,7 @@ def main():
                 st.warning("Voer alstublieft de context in voor de phishing e-mail.")
 
     # Display debug information
-    render_debug_info(get_anthropic_api_key(), MODEL_NAME, MAX_TOKENS, TEMPERATURE)
+    render_debug_info(get_anthropic_api_key(), get_model_name(), get_max_tokens(), get_temperature())
 
 if __name__ == "__main__":
     main()

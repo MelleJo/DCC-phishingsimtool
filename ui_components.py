@@ -2,12 +2,13 @@ import streamlit as st
 from streamlit_antd.tabs import st_antd_tabs
 from streamlit_antd.cards import Action, Item, st_antd_cards
 from streamlit_antd.steps import Item as StepItem, st_antd_steps
+from streamlit_antd.form import st_antd_form
+from config import get_config, update_config
 
 def render_main_page():
-    tabs = [{"Label": "Generator"}, {"Label": "Instructies"}]
+    tabs = [{"Label": "Generator"}, {"Label": "Instellingen"}]
     tab_event = st_antd_tabs(tabs, key="main_tabs")
     
-    # Default to "Generator" tab if no event is returned
     active_tab = "Generator"
     if tab_event and isinstance(tab_event, dict) and "payload" in tab_event:
         active_tab = tab_event["payload"].get("Label", "Generator")
@@ -16,7 +17,6 @@ def render_main_page():
         context = st.text_area("Voer de context in voor de phishing e-mail (bijv. bedrijfsspecifieke informatie, industrie, actuele gebeurtenissen):", height=150)
         difficulty = st.selectbox("Selecteer het moeilijkheidsniveau:", ["Makkelijk", "Gemiddeld", "Moeilijk"])
 
-        # Display steps of the process
         steps = [
             StepItem("Input", "Voer de context en het moeilijkheidsniveau in"),
             StepItem("Generatie", "De AI genereert een phishing simulatie e-mail"),
@@ -25,8 +25,8 @@ def render_main_page():
         st_antd_steps(steps, current=1, direction="horizontal")
 
         return context, difficulty
-    elif active_tab == "Instructies":
-        st.write("Hier kunt u instructies toevoegen over hoe de DCC Phishing Simulatie Tool te gebruiken.")
+    elif active_tab == "Instellingen":
+        render_settings()
         return None, None
 
 def display_generated_email(result):
@@ -41,7 +41,6 @@ def display_generated_email(result):
     indicators = next((s for s in sections if s.startswith("Phishing-indicatoren:")), "").split("\n")[1:]
     explanation = next((s for s in sections if s.startswith("Uitleg:")), "").split("\n")[1:]
 
-    # Display generated email in a Card
     email_card = Item(
         id="generated_email",
         title=f"Onderwerp: {subject}",
@@ -50,7 +49,6 @@ def display_generated_email(result):
     )
     st_antd_cards([email_card])
 
-    # Display phishing indicators and explanation
     st.subheader("Phishing-indicatoren")
     for indicator in indicators:
         st.markdown(f"- {indicator}")
@@ -59,8 +57,25 @@ def display_generated_email(result):
     for point in explanation:
         st.markdown(f"- {point}")
 
+def render_settings():
+    config = get_config()
+    with st_antd_form("settings_form"):
+        st.subheader("AI Model Instellingen")
+        model_name = st.text_input("Model Naam", value=config['MODEL_NAME'])
+        max_tokens = st.number_input("Max Tokens", value=config['MAX_TOKENS'], min_value=1, max_value=10000)
+        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=config['TEMPERATURE'], step=0.1)
+        
+        if st.form_submit_button("Instellingen Opslaan"):
+            update_config({
+                'MODEL_NAME': model_name,
+                'MAX_TOKENS': max_tokens,
+                'TEMPERATURE': temperature
+            })
+            st.success("Instellingen zijn opgeslagen!")
+
 def render_debug_info(api_key, model_name, max_tokens, temperature):
     st.subheader("Debug Informatie")
+    st.write("API Key (gemaskeerd):", "*" * len(api_key))
     st.write("Model Naam:", model_name)
     st.write("Max Tokens:", max_tokens)
     st.write("Temperature:", temperature)
