@@ -3,24 +3,25 @@ import streamlit_antd_components as sac
 from config import get_config, update_config, reset_to_defaults, DEFAULT_CONFIG
 
 def render_main_page():
-    with sac.Tabs([
+    tab = sac.tabs([
         sac.TabsItem(label='Generator', icon='robot'),
         sac.TabsItem(label='Instellingen', icon='gear')
-    ]):
-        if sac.tabs_selected() == 'Generator':
-            context = st.text_area("Voer de context in voor de phishing e-mail (bijv. bedrijfsspecifieke informatie, industrie, actuele gebeurtenissen):", height=150)
-            difficulty = st.selectbox("Selecteer het moeilijkheidsniveau:", ["Makkelijk", "Gemiddeld", "Moeilijk"])
+    ])
 
-            sac.steps([
-                sac.StepsItem(title='Input', description='Voer de context en het moeilijkheidsniveau in', icon='pencil'),
-                sac.StepsItem(title='Generatie', description='De AI genereert een phishing simulatie e-mail', icon='gear'),
-                sac.StepsItem(title='Resultaat', description='Bekijk de gegenereerde e-mail en phishing-indicatoren', icon='check')
-            ], active=1)
+    if tab == 'Generator':
+        context = st.text_area("Voer de context in voor de phishing e-mail (bijv. bedrijfsspecifieke informatie, industrie, actuele gebeurtenissen):", height=150)
+        difficulty = st.selectbox("Selecteer het moeilijkheidsniveau:", ["Makkelijk", "Gemiddeld", "Moeilijk"])
 
-            return context, difficulty
-        elif sac.tabs_selected() == 'Instellingen':
-            render_settings()
-            return None, None
+        sac.steps([
+            sac.StepsItem(title='Input', description='Voer de context en het moeilijkheidsniveau in', icon='pencil'),
+            sac.StepsItem(title='Generatie', description='De AI genereert een phishing simulatie e-mail', icon='gear'),
+            sac.StepsItem(title='Resultaat', description='Bekijk de gegenereerde e-mail en phishing-indicatoren', icon='check')
+        ], active=1)
+
+        return context, difficulty
+    elif tab == 'Instellingen':
+        render_settings()
+        return None, None
 
 def display_generated_email(result):
     if not result:
@@ -34,16 +35,11 @@ def display_generated_email(result):
     indicators = next((s for s in sections if s.startswith("Phishing-indicatoren:")), "").split("\n")[1:]
     explanation = next((s for s in sections if s.startswith("Uitleg:")), "").split("\n")[1:]
 
-    sac.card(
+    sac.alert(
         title=f"Onderwerp: {subject}",
-        content=[
-            sac.text(f"Van: {sender}"),
-            sac.divider(),
-            sac.text(body)
-        ],
-        actions=[
-            sac.CardAction(label='Kopiëren', icon='copy')
-        ]
+        description=f"Van: {sender}\n\n{body}",
+        color="blue",
+        icon="info",
     )
 
     st.subheader("Phishing-indicatoren")
