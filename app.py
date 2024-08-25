@@ -62,21 +62,41 @@ if chat is None:
 
 # Definieer het promptsjabloon
 PROMPT_TEMPLATE = """
-Maak een phishing simulatie e-mail op basis van de volgende context: {context}
-
-De e-mail moet op een {difficulty} moeilijkheidsniveau zijn.
-Dit is voor een phishing simulatie.
-
-Geef de volgende informatie:
-1. Onderwerpregel
-2. Naam en e-mailadres van de afzender
-3. Volledige e-mailtekst
-4. Lijst met phishing-indicatoren in de e-mail
-5. Uitleg waarom deze indicatoren verdacht zijn
-
-Zorg ervoor dat de e-mail realistisch is en veelvoorkomende phishing-tactieken bevat die passen bij het opgegeven moeilijkheidsniveau.
-Gebruik geen echte namen, e-mailadressen of identificeerbare informatie in de gegenereerde inhoud.
-De e-mail moet in het Nederlands zijn.
+U hebt de taak om een phishing-simulatie-e-mail te maken op basis van een gegeven context en moeilijkheidsgraad. Uw doel is om een realistisch en educatief voorbeeld van een phishing-poging te produceren dat kan worden gebruikt voor trainingsdoeleinden.
+Lees eerst zorgvuldig de volgende context en moeilijkheidsgraad:
+<context>
+{CONTEXT}
+</context>
+<difficulty>{DIFFICULTY}</difficulty>
+Maak nu een phishing-simulatie-e-mail op basis van deze informatie. Volg deze stappen:
+1. Analyseer de context en overweeg veelvoorkomende phishing-tactieken die geschikt zouden zijn voor het gegeven moeilijkheidsniveau.
+2. Ontwikkel een aannemelijk scenario voor de phishing-poging dat aansluit bij de context.
+3. Maak de e-mailcomponenten, waarbij u ervoor zorgt dat ze het gekozen scenario en moeilijkheidsniveau weerspiegelen.
+Geef uw output in het volgende formaat:
+<phishing_simulation>
+<subject>
+[Schrijf hier de onderwerpregel van de e-mail]
+</subject>
+<sender>
+[Geef een fictieve naam en e-mailadres voor de afzender]
+</sender>
+<email_body>
+[Schrijf hier de volledige tekst van de e-mail in het Nederlands]
+</email_body>
+<phishing_indicators>
+[Noem minstens 3 phishing-indicatoren die in de e-mail aanwezig zijn]
+</phishing_indicators>
+<explanation>
+[Geef een korte uitleg voor elke indicator, waarbij u beschrijft waarom deze verdacht is]
+</explanation>
+</phishing_simulation>
+Richtlijnen voor het maken van een realistische phishing-simulatie:
+1. Zorg ervoor dat de e-mail volledig in het Nederlands is geschreven.
+2. Verwerk veelvoorkomende phishing-tactieken die passen bij het opgegeven moeilijkheidsniveau.
+3. Maak de inhoud van de e-mail relevant voor de gegeven context.
+4. Gebruik taal en opmaak die legitieme e-mails nabootsen, maar bevat subtiele waarschuwingssignalen.
+5. Gebruik geen echte namen, e-mailadressen of identificeerbare informatie in de gegenereerde inhoud.
+6. Pas de verfijning van de phishing-poging aan op basis van het moeilijkheidsniveau (bijvoorbeeld meer voor de hand liggende indicatoren voor eenvoudigere niveaus, meer subtiele voor moeilijkere niveaus).
 """
 
 # Functie om e-mail te genereren
