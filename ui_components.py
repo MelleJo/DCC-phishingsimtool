@@ -35,10 +35,47 @@ def display_generated_email(result):
     indicators = next((s for s in sections if s.startswith("Phishing-indicatoren:")), "").split("\n")[1:]
     explanation = next((s for s in sections if s.startswith("Uitleg:")), "").split("\n")[1:]
 
-    st.subheader("Gegenereerde Phishing E-mail")
-    st.markdown(f"**Onderwerp:** {subject}")
-    st.markdown(f"**Van:** {sender}")
-    st.text_area("E-mailtekst:", value=body, height=200, disabled=True)
+    st.markdown("""
+    <style>
+    .email-container {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 20px;
+        background-color: #f9f9f9;
+        font-family: Arial, sans-serif;
+    }
+    .email-header {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    .email-subject {
+        font-size: 18px;
+        font-weight: bold;
+    }
+    .email-sender {
+        color: #666;
+        margin-top: 5px;
+    }
+    .email-body {
+        background-color: white;
+        padding: 15px;
+        border-radius: 5px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="email-container">
+        <div class="email-header">
+            <div class="email-subject">{subject}</div>
+            <div class="email-sender">Van: {sender}</div>
+        </div>
+        <div class="email-body">
+            {body.replace('\n', '<br>')}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.subheader("Phishing-indicatoren")
     for indicator in indicators:

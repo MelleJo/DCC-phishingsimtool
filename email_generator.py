@@ -3,6 +3,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage
 from config import get_anthropic_api_key, get_model_name, get_max_tokens, get_temperature
 import logging
+from search_agent import get_authentic_info
 
 # Initialize ChatAnthropic
 @st.cache_resource
@@ -28,10 +29,19 @@ Lees eerst zorgvuldig de volgende context en moeilijkheidsgraad:
 {context}
 </context>
 <difficulty>{difficulty}</difficulty>
+
+Gebruik de volgende authentieke informatie in uw e-mail:
+<authentic_info>
+Website: {website}
+E-mail: {email}
+Persoon: {person}
+</authentic_info>
+
 Maak nu een phishing-simulatie-e-mail op basis van deze informatie. Volg deze stappen:
 1. Analyseer de context en overweeg veelvoorkomende phishing-tactieken die geschikt zouden zijn voor het gegeven moeilijkheidsniveau.
-2. Ontwikkel een aannemelijk scenario voor de phishing-poging dat aansluit bij de context.
+2. Ontwikkel een aannemelijk scenario voor de phishing-poging dat aansluit bij de context en de authentieke informatie gebruikt.
 3. Maak de e-mailcomponenten, waarbij u ervoor zorgt dat ze het gekozen scenario en moeilijkheidsniveau weerspiegelen.
+
 Geef uw output in het volgende formaat:
 <phishing_simulation>
 <subject>
@@ -50,19 +60,31 @@ Geef uw output in het volgende formaat:
 [Geef een korte uitleg voor elke indicator, waarbij u beschrijft waarom deze verdacht is]
 </explanation>
 </phishing_simulation>
+
 Richtlijnen voor het maken van een realistische phishing-simulatie:
 1. Zorg ervoor dat de e-mail volledig in het Nederlands is geschreven.
 2. Verwerk veelvoorkomende phishing-tactieken die passen bij het opgegeven moeilijkheidsniveau.
 3. Maak de inhoud van de e-mail relevant voor de gegeven context.
 4. Gebruik taal en opmaak die legitieme e-mails nabootsen, maar bevat subtiele waarschuwingssignalen.
-5. Gebruik geen echte namen, e-mailadressen of identificeerbare informatie in de gegenereerde inhoud.
+5. Gebruik de verstrekte authentieke informatie om de e-mail geloofwaardiger te maken.
 6. Pas de verfijning van de phishing-poging aan op basis van het moeilijkheidsniveau (bijvoorbeeld meer voor de hand liggende indicatoren voor eenvoudigere niveaus, meer subtiele voor moeilijkere niveaus).
 """
 
 def generate_phishing_email(context, difficulty):
     try:
+        # Get authentic information
+        website = get_authentic_info(context, 'website')
+        email = get_authentic_info(context, 'email')
+        person = get_authentic_info(context, 'person')
+
         messages = [
-            HumanMessage(content=PROMPT_TEMPLATE.format(context=context, difficulty=difficulty))
+            HumanMessage(content=PROMPT_TEMPLATE.format(
+                context=context, 
+                difficulty=difficulty,
+                website=website,
+                email=email,
+                person=person
+            ))
         ]
         st.write("Debug - Sending request to API")  # Debug output
         response = chat.invoke(messages)

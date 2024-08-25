@@ -3,7 +3,9 @@ import streamlit as st
 def get_anthropic_api_key():
     return st.secrets["ANTHROPIC_API_KEY"]
 
-# Default settings saved in code
+def get_tavily_api_key():
+    return st.secrets["TAVILY_API_KEY"]
+
 DEFAULT_CONFIG = {
     'MODEL_NAME': "claude-3-5-sonnet-20240620",
     'MAX_TOKENS': 1000,
