@@ -1,9 +1,7 @@
 import streamlit as st
-from streamlit_antd.tabs import st_antd_tabs
-from streamlit_antd.cards import Action, Item, st_antd_cards
-from streamlit_antd.steps import Item as StepItem, st_antd_steps
-from streamlit_antd.form import st_antd_form
-from config import get_config, update_config
+from streamlit_antd import st_antd_tabs, st_antd_steps, st_antd_form, st_antd_card
+from streamlit_antd.card import Action, Item
+from config import get_config, update_config, reset_to_defaults, DEFAULT_CONFIG
 
 def render_main_page():
     tabs = [{"Label": "Generator"}, {"Label": "Instellingen"}]
@@ -18,9 +16,9 @@ def render_main_page():
         difficulty = st.selectbox("Selecteer het moeilijkheidsniveau:", ["Makkelijk", "Gemiddeld", "Moeilijk"])
 
         steps = [
-            StepItem("Input", "Voer de context en het moeilijkheidsniveau in"),
-            StepItem("Generatie", "De AI genereert een phishing simulatie e-mail"),
-            StepItem("Resultaat", "Bekijk de gegenereerde e-mail en phishing-indicatoren")
+            {"title": "Input", "description": "Voer de context en het moeilijkheidsniveau in"},
+            {"title": "Generatie", "description": "De AI genereert een phishing simulatie e-mail"},
+            {"title": "Resultaat", "description": "Bekijk de gegenereerde e-mail en phishing-indicatoren"}
         ]
         st_antd_steps(steps, current=1, direction="horizontal")
 
@@ -47,7 +45,7 @@ def display_generated_email(result):
         description=f"Van: {sender}\n\n{body}",
         actions=[Action("copy", "CopyOutlined")]
     )
-    st_antd_cards([email_card])
+    st_antd_card(email_card)
 
     st.subheader("Phishing-indicatoren")
     for indicator in indicators:
@@ -65,17 +63,29 @@ def render_settings():
         max_tokens = st.number_input("Max Tokens", value=config['MAX_TOKENS'], min_value=1, max_value=10000)
         temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=config['TEMPERATURE'], step=0.1)
         
-        if st.form_submit_button("Instellingen Opslaan"):
-            update_config({
-                'MODEL_NAME': model_name,
-                'MAX_TOKENS': max_tokens,
-                'TEMPERATURE': temperature
-            })
-            st.success("Instellingen zijn opgeslagen!")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.form_submit_button("Instellingen Opslaan"):
+                update_config({
+                    'MODEL_NAME': model_name,
+                    'MAX_TOKENS': max_tokens,
+                    'TEMPERATURE': temperature
+                })
+                st.success("Instellingen zijn opgeslagen!")
+        
+        with col2:
+            if st.form_submit_button("Reset naar Standaardinstellingen"):
+                reset_to_defaults()
+                st.success("Instellingen zijn gereset naar standaardwaarden!")
+
+    st.subheader("Huidige Instellingen")
+    st.json(get_config())
+
+    st.subheader("Standaardinstellingen")
+    st.json(DEFAULT_CONFIG)
 
 def render_debug_info(api_key, model_name, max_tokens, temperature):
     st.subheader("Debug Informatie")
-    st.write("API Key (gemaskeerd):", "*" * len(api_key))
     st.write("Model Naam:", model_name)
     st.write("Max Tokens:", max_tokens)
     st.write("Temperature:", temperature)
