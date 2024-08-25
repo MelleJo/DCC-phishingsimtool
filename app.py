@@ -10,7 +10,7 @@ logging.basicConfig(filename='phishing_generator.log', level=logging.INFO,
                     format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 # Stel pagina-configuratie in
-st.set_page_config(page_title="Interne Phishing Simulatie E-mail Generator", layout="wide")
+st.set_page_config(page_title="DCC Phishing-simulatie tool", layout="wide")
 
 # Aangepaste CSS (hetzelfde als voorheen)
 st.markdown("""
