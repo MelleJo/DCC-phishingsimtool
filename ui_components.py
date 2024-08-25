@@ -61,7 +61,6 @@ def display_generated_email(result):
 
 def render_debug_info(api_key, model_name, max_tokens, temperature):
     st.subheader("Debug Informatie")
-    st.write("API Key (gemaskeerd):", "*" * len(api_key))
     st.write("Model Naam:", model_name)
     st.write("Max Tokens:", max_tokens)
     st.write("Temperature:", temperature)
