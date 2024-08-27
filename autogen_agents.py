@@ -1,4 +1,3 @@
-import autogen
 import streamlit as st
 from tavily import TavilyClient
 import os
@@ -11,53 +10,6 @@ tavily_client = TavilyClient(api_key=st.secrets["TAVILY_API_KEY"])
 
 # Initialize Anthropic client
 anthropic = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
-
-# Configuration for the AI agents
-config_list = [
-    {
-        "model": "claude-3-5-sonnet-20240620",
-        "api_key": st.secrets["ANTHROPIC_API_KEY"],
-    }
-]
-
-# Assistant configurations
-assistant_config = {
-    "name": "Phishing Email Assistant",
-    "system_message": "You are an AI assistant specialized in creating phishing simulation emails. Your goal is to create realistic and educational examples for cybersecurity training.",
-    "human_input_mode": "NEVER",
-    "llm_config": {"config_list": config_list},
-}
-
-researcher_config = {
-    "name": "Research Assistant",
-    "system_message": "You are a research assistant specialized in finding relevant information for creating phishing simulation emails.",
-    "human_input_mode": "NEVER",
-    "llm_config": {"config_list": config_list},
-}
-
-email_writer_config = {
-    "name": "Email Writer",
-    "system_message": "You are an AI specialized in writing realistic phishing emails based on given information and ideas.",
-    "human_input_mode": "NEVER",
-    "llm_config": {"config_list": config_list},
-}
-
-# Create agent instances
-assistant = autogen.AssistantAgent(**assistant_config)
-researcher = autogen.AssistantAgent(**researcher_config)
-email_writer = autogen.AssistantAgent(**email_writer_config)
-
-# Create a UserProxyAgent to manage the conversation
-user_proxy = autogen.UserProxyAgent(
-    name="Human",
-    human_input_mode="TERMINATE",
-    max_consecutive_auto_reply=10,
-    is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE"),
-    code_execution_config={"work_dir": "coding"},
-    llm_config={"config_list": config_list},
-    system_message="""Reply TERMINATE if the task has been solved at full satisfaction.
-Otherwise, reply CONTINUE, or the reason why the task is not solved yet."""
-)
 
 def conduct_research(query):
     try:

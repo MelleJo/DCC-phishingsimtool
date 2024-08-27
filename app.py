@@ -18,14 +18,11 @@ from logger import log_step, log_error, save_session_to_file
 
 # Set page configuration
 st.set_page_config(page_title="DCC Phishing Simulatie Tool", layout="wide")
-# Check if the app is restarting
-if not st.session_state.get('app_init', False):
-    # Clear all session state
+# Force reset the session state
+if 'force_reset' not in st.session_state:
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-    # Set the initialization flag
-    st.session_state.app_init = True
-    # Set the initial step
+    st.session_state.force_reset = True
     st.session_state.step = 1
 
 TOTAL_STEPS = 6
