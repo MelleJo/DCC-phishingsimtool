@@ -1,9 +1,14 @@
 import autogen
 import streamlit as st
 from tavily import TavilyClient
+import os
+
+os.environ["AUTOGEN_USE_DOCKER"] = "False"
 
 # Initialize Tavily client
 tavily_client = TavilyClient(api_key=st.secrets["TAVILY_API_KEY"])
+
+
 
 # Configuration for the AI agents
 config_list = [
