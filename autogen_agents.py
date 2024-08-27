@@ -2,18 +2,20 @@ import autogen
 import streamlit as st
 from tavily import TavilyClient
 import os
+from anthropic import Anthropic
 
 os.environ["AUTOGEN_USE_DOCKER"] = "False"
 
 # Initialize Tavily client
 tavily_client = TavilyClient(api_key=st.secrets["TAVILY_API_KEY"])
 
-
+# Initialize Anthropic client
+anthropic = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
 
 # Configuration for the AI agents
 config_list = [
     {
-        "model": "claude-3-sonnet-20240229",
+        "model": "claude-3-5-sonnet-20240620",
         "api_key": st.secrets["ANTHROPIC_API_KEY"],
     }
 ]
@@ -70,8 +72,18 @@ def generate_context_questions(business_type, email_type):
     The email will be {email_type} (from a colleague/boss if internal, or from a client/vendor/etc. if external).
     Questions should help in creating a realistic scenario. Only provide the questions, no additional text."""
     
-    user_proxy.initiate_chat(assistant, message=prompt)
-    return assistant.last_message()["content"].strip().split("\n")
+    try:
+        response = anthropic.messages.create(
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=300,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response.content.strip().split("\n")
+    except Exception as e:
+        st.error(f"Error in generating context questions: {str(e)}")
+        return []
 
 def generate_email_ideas(business_type, email_type, context_answers, research_results):
     prompt = f"""Create 6 different ideas for phishing emails based on the following information:
@@ -88,8 +100,18 @@ def generate_email_ideas(business_type, email_type, context_answers, research_re
     
     Number the ideas from 1 to 6. Provide only the ideas, no additional text."""
     
-    user_proxy.initiate_chat(assistant, message=prompt)
-    return assistant.last_message()["content"].strip().split("\n\n")
+    try:
+        response = anthropic.messages.create(
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=1000,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response.content.strip().split("\n\n")
+    except Exception as e:
+        st.error(f"Error in generating email ideas: {str(e)}")
+        return []
 
 def generate_full_emails(business_type, email_type, context_answers, research_results, selected_ideas):
     prompt = f"""Create full phishing simulation emails based on the following information:
@@ -125,5 +147,15 @@ def generate_full_emails(business_type, email_type, context_answers, research_re
     </email>
     """
     
-    user_proxy.initiate_chat(email_writer, message=prompt)
-    return email_writer.last_message()["content"].strip().split("<email>")[1:]  # Remove the first empty split
+    try:
+        response = anthropic.messages.create(
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=2000,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response.content.strip().split("<email>")[1:]  # Remove the first empty split
+    except Exception as e:
+        st.error(f"Error in generating full emails: {str(e)}")
+        return []
