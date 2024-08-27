@@ -12,7 +12,7 @@ tavily_client = TavilyClient(api_key=st.secrets["TAVILY_API_KEY"])
 config_list = [
     {
         "model": "claude-3-5-sonnet-20240620",
-        "api_key": st.secrets["ANTHROPIC_API_KEY"],
+        #"api_key": st.secrets["ANTHROPIC_API_KEY"],
         "api_type": "anthropic",
     }
 ]
