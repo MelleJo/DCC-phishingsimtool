@@ -8,3 +8,4 @@ langchain_anthropic
 streamlit-antd-components
 tavily-python
 pyautogen
+anthropic
