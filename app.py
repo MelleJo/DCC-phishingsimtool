@@ -59,7 +59,14 @@ def main():
                     st.session_state.internal_external
                 )
         
-        st.session_state.context_answers = display_context_questions(st.session_state.context_questions)
+        if not st.session_state.context_questions:
+            st.error("Er konden geen contextvragen worden gegenereerd. Probeer het opnieuw of ga verder zonder vragen.")
+            if st.button("Ga verder zonder vragen"):
+                st.session_state.context_answers = {}
+                st.session_state.step = 4
+                st.rerun()
+        else:
+            st.session_state.context_answers = display_context_questions(st.session_state.context_questions)
         
         if st.button("Onderzoek Starten", key="start_research_button"):
             log_step("Context Questions", st.session_state.context_answers)

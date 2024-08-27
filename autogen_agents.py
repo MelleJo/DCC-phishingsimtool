@@ -80,7 +80,14 @@ def generate_context_questions(business_type, email_type):
                 {"role": "user", "content": prompt}
             ]
         )
-        return response.content.strip().split("\n")
+        content = response.content
+        if isinstance(content, str):
+            questions = content.strip().split('\n')
+            return [q.strip() for q in questions if q.strip()]
+        elif isinstance(content, list):
+            return [q.strip() for q in content if isinstance(q, str) and q.strip()]
+        else:
+            raise ValueError(f"Unexpected response format: {type(content)}")
     except Exception as e:
         st.error(f"Error in generating context questions: {str(e)}")
         return []
