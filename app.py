@@ -36,7 +36,7 @@ def main():
         if st.session_state.business_type:
             log_step("Business Type Selection", st.session_state.business_type)
             st.session_state.step = 2
-            st.experimental_rerun()
+            st.rerun()
 
     # Step 2: Internal/External Selection
     elif st.session_state.step == 2:
@@ -45,7 +45,7 @@ def main():
         if st.session_state.internal_external:
             log_step("Internal/External Selection", st.session_state.internal_external)
             st.session_state.step = 3
-            st.experimental_rerun()
+            st.rerun()
 
     # Step 3: Generate and Display Context Questions
     elif st.session_state.step == 3:
@@ -64,7 +64,7 @@ def main():
         if st.button("Onderzoek Starten", key="start_research_button"):
             log_step("Context Questions", st.session_state.context_answers)
             st.session_state.step = 4
-            st.experimental_rerun()
+            st.rerun()
 
     # Step 4: Conduct Research and Display Results
     elif st.session_state.step == 4:
@@ -81,7 +81,7 @@ def main():
         if st.button("Volgende Stap", key="next_step_button"):
             log_step("Research Conducted")
             st.session_state.step = 5
-            st.experimental_rerun()
+            st.rerun()
 
     # Step 5: Generate and Display Email Ideas
     elif st.session_state.step == 5:
@@ -103,7 +103,7 @@ def main():
             if st.button("Genereer Volledige E-mails", key="generate_full_emails_button"):
                 log_step("Email Ideas Selected", st.session_state.selected_ideas)
                 st.session_state.step = 6
-                st.experimental_rerun()
+                st.rerun()
         else:
             st.warning("Selecteer 1-3 e-mailideeën om door te gaan.")
 
@@ -135,7 +135,7 @@ def main():
             del st.session_state[key]
         st.session_state.step = 1
         log_step("Session Reset")
-        st.experimental_rerun()
+        st.rerun()
 
 if __name__ == "__main__":
     main()
