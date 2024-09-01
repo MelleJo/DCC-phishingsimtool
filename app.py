@@ -8,12 +8,7 @@ from ui_components import(
     display_generated_emails,
     display_progress_bar
 )
-from autogen_agents import(
-    generate_context_questions,
-    conduct_research,
-    generate_email_ideas,
-    generate_full_emails
-)
+from autogen_agents import generate_context_questions, conduct_research, generate_email_ideas, generate_full_emails
 from logger import log_step, log_error, save_session_to_file
 
 # Force reset mechanism
