@@ -69,10 +69,10 @@ def generate_context_questions(business_type, email_type):
     The email will be {email_type} (from a colleague/boss if internal, or from a client/vendor/etc. if external).
     Questions should help in creating a realistic scenario. Only provide the questions, no additional text."""
     
-    response = assistant.generate_response(prompt)
+    response = user_proxy.initiate_chat(assistant, message=prompt)
     
     try:
-        questions = response.strip().split('\n')
+        questions = assistant.last_message()["content"].strip().split('\n')
         return [q.strip() for q in questions if q.strip()]
     except Exception as e:
         st.error(f"Error in processing context questions: {str(e)}")
@@ -93,10 +93,10 @@ def generate_email_ideas(business_type, email_type, context_answers, research_re
     
     Number the ideas from 1 to 6. Provide only the ideas, no additional text."""
     
-    response = assistant.generate_response(prompt)
+    response = user_proxy.initiate_chat(assistant, message=prompt)
     
     try:
-        return response.strip().split("\n\n")
+        return assistant.last_message()["content"].strip().split("\n\n")
     except Exception as e:
         st.error(f"Error in generating email ideas: {str(e)}")
         return []
@@ -135,10 +135,10 @@ def generate_full_emails(business_type, email_type, context_answers, research_re
     </email>
     """
     
-    response = email_writer.generate_response(prompt)
+    response = user_proxy.initiate_chat(email_writer, message=prompt)
     
     try:
-        return response.strip().split("<email>")[1:]  # Remove the first empty split
+        return email_writer.last_message()["content"].strip().split("<email>")[1:]  # Remove the first empty split
     except Exception as e:
         st.error(f"Error in generating full emails: {str(e)}")
         return []
