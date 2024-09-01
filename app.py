@@ -1,5 +1,5 @@
 import streamlit as st
-from ui_components import (
+from ui_components import(
     display_business_categories, 
     display_internal_external_selection, 
     display_context_questions,
@@ -8,7 +8,7 @@ from ui_components import (
     display_generated_emails,
     display_progress_bar
 )
-from autogen_agents import (
+from autogen_agents import(
     generate_context_questions,
     conduct_research,
     generate_email_ideas,
