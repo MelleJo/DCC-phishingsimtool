@@ -69,8 +69,7 @@ def generate_context_questions(business_type, email_type):
     The email will be {email_type} (from a colleague/boss if internal, or from a client/vendor/etc. if external).
     Questions should help in creating a realistic scenario. Only provide the questions, no additional text."""
     
-    user_proxy.initiate_chat(assistant, message=prompt)
-    response = assistant.last_message()["content"]
+    response = assistant.generate_response(prompt)
     
     try:
         questions = response.strip().split('\n')
@@ -94,8 +93,7 @@ def generate_email_ideas(business_type, email_type, context_answers, research_re
     
     Number the ideas from 1 to 6. Provide only the ideas, no additional text."""
     
-    user_proxy.initiate_chat(assistant, message=prompt)
-    response = assistant.last_message()["content"]
+    response = assistant.generate_response(prompt)
     
     try:
         return response.strip().split("\n\n")
@@ -137,8 +135,7 @@ def generate_full_emails(business_type, email_type, context_answers, research_re
     </email>
     """
     
-    user_proxy.initiate_chat(email_writer, message=prompt)
-    response = email_writer.last_message()["content"]
+    response = email_writer.generate_response(prompt)
     
     try:
         return response.strip().split("<email>")[1:]  # Remove the first empty split
