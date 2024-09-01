@@ -1,13 +1,5 @@
 import streamlit as st
-from ui_components import(
-    display_business_categories, 
-    display_internal_external_selection, 
-    display_context_questions,
-    display_research_results,
-    display_email_ideas,
-    display_generated_emails,
-    display_progress_bar
-)
+from ui_components import display_business_categories, display_internal_external_selection, display_context_questions, display_research_results, display_email_ideas, display_generated_emails, display_progress_bar 
 from autogen_agents import generate_context_questions, conduct_research, generate_email_ideas, generate_full_emails
 from logger import log_step, log_error, save_session_to_file
 
