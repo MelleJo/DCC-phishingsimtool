@@ -1,4 +1,8 @@
 import streamlit as st
+
+# Set page configuration - this must be the first Streamlit command
+st.set_page_config(page_title="DCC Phishing Simulatie Tool", layout="wide")
+
 from ui_components import (
     display_business_categories, 
     display_internal_external_selection, 
@@ -15,9 +19,6 @@ from autogen_agents import (
     generate_full_email
 )
 from logger import log_step, log_error, save_session_to_file
-
-# Set page configuration
-st.set_page_config(page_title="DCC Phishing Simulatie Tool", layout="wide")
 
 # Force reset the entire session state
 for key in list(st.session_state.keys()):
