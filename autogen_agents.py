@@ -1,81 +1,59 @@
 import autogen
 import streamlit as st
 from tavily import TavilyClient
-import os
-
-os.environ["AUTOGEN_USE_DOCKER"] = "False"
+from config import get_anthropic_api_key, get_tavily_api_key, get_model_name, get_max_tokens, get_temperature
+from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import HumanMessage
 
 # Initialize Tavily client
-tavily_client = TavilyClient(api_key=st.secrets["TAVILY_API_KEY"])
+tavily_client = TavilyClient(api_key=get_tavily_api_key())
 
-# Configuration for the AI agents
-config_list = [
-    {
-        "model": "claude-3-5-sonnet-20240620",
-        "api_key": st.secrets["ANTHROPIC_API_KEY"],
-        "api_type": "anthropic",
-    }
-]
+# Initialize ChatAnthropic for Haiku
+@st.cache_resource
+def get_haiku_chat():
+    return ChatAnthropic(
+        model="claude-3-haiku-20240307",
+        anthropic_api_key=get_anthropic_api_key(),
+        max_tokens_to_sample=1000,
+        temperature=0.7,
+    )
 
-# Assistant configurations
-assistant_config = {
-    "name": "Phishing Email Assistant",
-    "system_message": "You are an AI assistant specialized in creating phishing simulation emails. Your goal is to create realistic and educational examples for cybersecurity training.",
-    "human_input_mode": "NEVER",
-    "llm_config": {"config_list": config_list},
-}
+haiku_chat = get_haiku_chat()
 
-researcher_config = {
-    "name": "Research Assistant",
-    "system_message": "You are a research assistant specialized in finding relevant information for creating phishing simulation emails.",
-    "human_input_mode": "NEVER",
-    "llm_config": {"config_list": config_list},
-}
+# Initialize ChatAnthropic for main tasks
+@st.cache_resource
+def get_main_chat():
+    return ChatAnthropic(
+        model=get_model_name(),
+        anthropic_api_key=get_anthropic_api_key(),
+        max_tokens_to_sample=get_max_tokens(),
+        temperature=get_temperature(),
+    )
 
-email_writer_config = {
-    "name": "Email Writer",
-    "system_message": "You are an AI specialized in writing realistic phishing emails based on given information and ideas.",
-    "human_input_mode": "NEVER",
-    "llm_config": {"config_list": config_list},
-}
-
-# Create agent instances
-assistant = autogen.AssistantAgent(**assistant_config)
-researcher = autogen.AssistantAgent(**researcher_config)
-email_writer = autogen.AssistantAgent(**email_writer_config)
-
-# Create a UserProxyAgent to manage the conversation
-user_proxy = autogen.UserProxyAgent(
-    name="Human",
-    human_input_mode="NEVER",
-    max_consecutive_auto_reply=10,
-    is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE"),
-    code_execution_config={"work_dir": "coding"},
-    llm_config={"config_list": config_list},
-    system_message="""Reply TERMINATE if the task has been solved at full satisfaction.
-Otherwise, reply CONTINUE, or the reason why the task is not solved yet."""
-)
-
-def conduct_research(query):
-    try:
-        response = tavily_client.search(query=query, search_depth="advanced", max_results=5)
-        return [result['content'] for result in response['results']]
-    except Exception as e:
-        st.error(f"Error in Tavily search: {str(e)}")
-        return []
+main_chat = get_main_chat()
 
 def generate_context_questions(business_type, email_type):
     prompt = f"""Generate 5 relevant questions to gather context for creating a phishing simulation email for a {business_type}. 
     The email will be {email_type} (from a colleague/boss if internal, or from a client/vendor/etc. if external).
     Questions should help in creating a realistic scenario. Only provide the questions, no additional text."""
     
-    response = user_proxy.initiate_chat(assistant, message=prompt)
+    messages = [HumanMessage(content=prompt)]
     
     try:
-        questions = assistant.last_message()["content"].strip().split('\n')
+        response = haiku_chat.invoke(messages)
+        questions = response.content.strip().split('\n')
         return [q.strip() for q in questions if q.strip()]
     except Exception as e:
-        st.error(f"Error in processing context questions: {str(e)}")
+        st.error(f"Error in generating context questions: {str(e)}")
+        return []
+
+@st.cache_data
+def conduct_research(query):
+    try:
+        response = tavily_client.search(query=query, search_depth="advanced", max_results=5)
+        return [result['content'] for result in response['results']]
+    except Exception as e:
+        st.error(f"Error in Tavily search: {str(e)}")
         return []
 
 def generate_email_ideas(business_type, email_type, context_answers, research_results):
@@ -93,31 +71,32 @@ def generate_email_ideas(business_type, email_type, context_answers, research_re
     
     Number the ideas from 1 to 6. Provide only the ideas, no additional text."""
     
-    response = user_proxy.initiate_chat(assistant, message=prompt)
+    messages = [HumanMessage(content=prompt)]
     
     try:
-        return assistant.last_message()["content"].strip().split("\n\n")
+        response = main_chat.invoke(messages)
+        ideas = response.content.strip().split("\n\n")
+        return [idea.strip() for idea in ideas if idea.strip()]
     except Exception as e:
         st.error(f"Error in generating email ideas: {str(e)}")
         return []
 
-def generate_full_emails(business_type, email_type, context_answers, research_results, selected_ideas):
-    prompt = f"""Create full phishing simulation emails based on the following information:
+def generate_full_email(business_type, email_type, context_answers, research_results, selected_idea):
+    prompt = f"""Create a full phishing simulation email based on the following information:
     Business Type: {business_type}
     Email Type: {email_type}
     Context: {context_answers}
     Research Results: {research_results}
-    Selected Ideas: {selected_ideas}
+    Selected Idea: {selected_idea}
     
-    For each email, provide:
+    Provide the following:
     1. Subject line
     2. Sender (name and email address)
     3. Full email body
     4. List of phishing indicators
     5. Explanation of why these indicators are suspicious
     
-    Make the emails realistic but ensure no real names or identifiable information is used. Emails should be in Dutch.
-    Use the following format for each email:
+    Use the following format:
     <email>
     <subject>Subject line here</subject>
     <sender>Name <email@example.com></sender>
@@ -135,10 +114,11 @@ def generate_full_emails(business_type, email_type, context_answers, research_re
     </email>
     """
     
-    response = user_proxy.initiate_chat(email_writer, message=prompt)
+    messages = [HumanMessage(content=prompt)]
     
     try:
-        return email_writer.last_message()["content"].strip().split("<email>")[1:]  # Remove the first empty split
+        response = main_chat.invoke(messages)
+        return response.content.strip()
     except Exception as e:
-        st.error(f"Error in generating full emails: {str(e)}")
-        return []
+        st.error(f"Error in generating full email: {str(e)}")
+        return None
