@@ -8,6 +8,7 @@ class SessionManager:
         if 'initialized' not in st.session_state:
             st.session_state.clear()
             st.session_state.initialized = True
+        if 'step' not in st.session_state:
             st.session_state.step = 1
 
     def reset_session(self):
@@ -17,6 +18,8 @@ class SessionManager:
         st.session_state.step = 1
 
     def get_step(self):
+        if 'step' not in st.session_state:
+            st.session_state.step = 1
         return st.session_state.step
 
     def set_step(self, step):
@@ -29,6 +32,9 @@ class SessionManager:
         return st.session_state.get(key, default)
 
     def increment_step(self):
-        st.session_state.step += 1
+        if 'step' not in st.session_state:
+            st.session_state.step = 1
+        else:
+            st.session_state.step += 1
 
 session_manager = SessionManager()
