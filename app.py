@@ -20,7 +20,8 @@ from logger import log_step, log_error, save_session_to_file
 st.set_page_config(page_title="DCC Phishing Simulatie Tool", layout="wide")
 
 # Initialize session state
-if 'step' not in st.session_state:
+if 'initialized' not in st.session_state:
+    st.session_state.initialized = False
     st.session_state.step = 1
 
 TOTAL_STEPS = 6
@@ -28,10 +29,15 @@ TOTAL_STEPS = 6
 def reset_app():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
+    st.session_state.initialized = False
     st.session_state.step = 1
     log_step("Session Reset")
 
 def main():
+    if not st.session_state.initialized:
+        reset_app()
+        st.session_state.initialized = True
+
     st.title("DCC Phishing Simulatie Tool")
 
     # Sidebar
@@ -46,8 +52,9 @@ def main():
     # Step 1: Business Type Selection
     if st.session_state.step == 1:
         st.subheader("Step 1: Select Business Type")
-        st.session_state.business_type = display_business_categories()
-        if st.session_state.business_type:
+        business_type = display_business_categories()
+        if business_type:
+            st.session_state.business_type = business_type
             log_step("Business Type Selection", st.session_state.business_type)
             st.session_state.step = 2
             st.rerun()
@@ -56,8 +63,9 @@ def main():
     elif st.session_state.step == 2:
         st.subheader("Step 2: Select Email Type")
         st.info(f"Selected business type: {st.session_state.business_type}")
-        st.session_state.internal_external = display_internal_external_selection()
-        if st.session_state.internal_external:
+        internal_external = display_internal_external_selection()
+        if internal_external:
+            st.session_state.internal_external = internal_external
             log_step("Internal/External Selection", st.session_state.internal_external)
             st.session_state.step = 3
             st.rerun()
@@ -82,12 +90,12 @@ def main():
                 st.session_state.step = 4
                 st.rerun()
         else:
-            st.session_state.context_answers = display_context_questions(st.session_state.context_questions)
-        
-        if st.button("Start Research", key="start_research_button"):
-            log_step("Context Questions", st.session_state.context_answers)
-            st.session_state.step = 4
-            st.rerun()
+            context_answers = display_context_questions(st.session_state.context_questions)
+            if st.button("Start Research", key="start_research_button"):
+                st.session_state.context_answers = context_answers
+                log_step("Context Questions", st.session_state.context_answers)
+                st.session_state.step = 4
+                st.rerun()
 
     # Step 4: Conduct Research
     elif st.session_state.step == 4:
@@ -122,10 +130,11 @@ def main():
                     st.session_state.research_results
                 )
         
-        st.session_state.selected_ideas = display_email_ideas(st.session_state.email_ideas)
+        selected_ideas = display_email_ideas(st.session_state.email_ideas)
         
-        if len(st.session_state.selected_ideas) > 0 and len(st.session_state.selected_ideas) <= 3:
+        if len(selected_ideas) > 0 and len(selected_ideas) <= 3:
             if st.button("Generate Full Emails", key="generate_full_emails_button"):
+                st.session_state.selected_ideas = selected_ideas
                 log_step("Email Ideas Selected", st.session_state.selected_ideas)
                 st.session_state.step = 6
                 st.rerun()
