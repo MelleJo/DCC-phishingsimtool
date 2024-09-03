@@ -20,21 +20,28 @@ from autogen_agents import (
 )
 from logger import log_step, log_error, save_session_to_file
 
-# Force reset the entire session state
-for key in list(st.session_state.keys()):
-    del st.session_state[key]
-
-# Initialize session state
-if 'step' not in st.session_state:
-    st.session_state.step = 1
-
 TOTAL_STEPS = 6
 
+def initialize_session_state():
+    if 'step' not in st.session_state:
+        st.session_state.step = 1
+    if 'reset_requested' not in st.session_state:
+        st.session_state.reset_requested = False
+
 def reset_app():
-    st.session_state.step = 1
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    initialize_session_state()
+    st.session_state.reset_requested = True
     st.rerun()
 
 def main():
+    initialize_session_state()
+
+    if st.session_state.reset_requested:
+        st.session_state.step = 1
+        st.session_state.reset_requested = False
+
     st.title("DCC Phishing Simulatie Tool")
 
     # Sidebar
