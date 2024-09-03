@@ -16,15 +16,15 @@ from autogen_agents import (
 )
 from logger import log_step, log_error, save_session_to_file
 
+# Set page configuration
+st.set_page_config(page_title="DCC Phishing Simulatie Tool", layout="wide")
+
 # Force reset mechanism
 if 'force_reset' not in st.session_state:
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.session_state.force_reset = True
     st.session_state.step = 1
-
-# Set page configuration
-st.set_page_config(page_title="DCC Phishing Simulatie Tool", layout="wide")
 
 TOTAL_STEPS = 6
 
