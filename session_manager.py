@@ -5,21 +5,15 @@ class SessionManager:
         self.initialize_session()
 
     def initialize_session(self):
-        if 'initialized' not in st.session_state:
-            st.session_state.clear()
-            st.session_state.initialized = True
         if 'step' not in st.session_state:
             st.session_state.step = 1
 
     def reset_session(self):
         for key in list(st.session_state.keys()):
-            if key != 'initialized':
-                del st.session_state[key]
-        st.session_state.step = 1
+            del st.session_state[key]
+        self.initialize_session()
 
     def get_step(self):
-        if 'step' not in st.session_state:
-            st.session_state.step = 1
         return st.session_state.step
 
     def set_step(self, step):
@@ -32,9 +26,6 @@ class SessionManager:
         return st.session_state.get(key, default)
 
     def increment_step(self):
-        if 'step' not in st.session_state:
-            st.session_state.step = 1
-        else:
-            st.session_state.step += 1
+        st.session_state.step += 1
 
 session_manager = SessionManager()

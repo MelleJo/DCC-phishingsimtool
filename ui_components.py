@@ -3,12 +3,12 @@ import streamlit_antd_components as sac
 from business_categories import get_categories, get_business_types, add_business_type
 
 def display_business_categories():
-    st.subheader("Selecteer een bedrijfscategorie")
+    st.subheader("Select a business category")
     
     try:
         categories = get_categories()
         if not categories:
-            st.error("Geen bedrijfscategorieën gevonden. Controleer de business_categories.py file.")
+            st.error("No business categories found. Check the business_categories.py file.")
             return None
         
         selected_category = sac.buttons(
@@ -18,10 +18,10 @@ def display_business_categories():
         )
         
         if selected_category:
-            st.subheader("Selecteer een bedrijfstype")
+            st.subheader("Select a business type")
             business_types = get_business_types(selected_category)
             if not business_types:
-                st.warning(f"Geen bedrijfstypes gevonden voor de categorie '{selected_category}'.")
+                st.warning(f"No business types found for the category '{selected_category}'.")
             else:
                 selected_business = sac.buttons(
                     items=[sac.ButtonsItem(label=bt) for bt in business_types],
@@ -32,63 +32,63 @@ def display_business_categories():
                     return selected_business
     
     except Exception as e:
-        st.error(f"Er is een fout opgetreden bij het laden van de bedrijfscategorieën: {str(e)}")
+        st.error(f"An error occurred while loading business categories: {str(e)}")
         return None
     
     # Option to add a new business type
-    with st.expander("Voeg een nieuw bedrijfstype toe"):
-        new_category = st.selectbox("Selecteer een categorie", categories, key="new_category_select")
-        new_business_type = st.text_input("Voer het nieuwe bedrijfstype in", key="new_business_type_input")
-        if st.button("Toevoegen", key="add_business_type_button") and new_business_type:
+    with st.expander("Add a new business type"):
+        new_category = st.selectbox("Select a category", categories, key="new_category_select")
+        new_business_type = st.text_input("Enter the new business type", key="new_business_type_input")
+        if st.button("Add", key="add_business_type_button") and new_business_type:
             try:
                 add_business_type(new_category, new_business_type)
-                st.success(f"Bedrijfstype '{new_business_type}' toegevoegd aan categorie '{new_category}'")
+                st.success(f"Business type '{new_business_type}' added to category '{new_category}'")
                 st.rerun()
             except Exception as e:
-                st.error(f"Fout bij het toevoegen van het nieuwe bedrijfstype: {str(e)}")
+                st.error(f"Error adding the new business type: {str(e)}")
 
     return None
 
 def display_internal_external_selection():
-    st.subheader("Selecteer het type e-mail")
+    st.subheader("Select the type of email")
     return st.radio(
-        "E-mail type",
-        ["Intern", "Extern"],
-        format_func=lambda x: f"{x} - {'E-mail van een collega of leidinggevende' if x == 'Intern' else 'E-mail van een klant, overheid, IT-provider, etc.'}",
+        "Email type",
+        ["Internal", "External"],
+        format_func=lambda x: f"{x} - {'Email from a colleague or manager' if x == 'Internal' else 'Email from a customer, government, IT provider, etc.'}",
         key="internal_external_radio"
     )
 
 def display_context_questions(questions):
-    st.subheader("Beantwoord de volgende vragen")
+    st.subheader("Answer the following questions")
     answers = {}
     for i, q in enumerate(questions):
         answers[q] = st.text_input(q, key=f"context_question_{i}")
     return answers
 
 def display_research_results(research_results):
-    st.subheader("Onderzoeksresultaten")
+    st.subheader("Research Results")
     for category, results in research_results.items():
-        with st.expander(f"{category} Informatie"):
+        with st.expander(f"{category} Information"):
             for item in results:
                 st.write(f"- {item}")
 
 def display_progress_bar(current_step, total_steps):
     progress = (current_step - 1) / (total_steps - 1)
     st.progress(progress)
-    st.write(f"Stap {current_step} van {total_steps}")
+    st.write(f"Step {current_step} of {total_steps}")
 
 def display_email_ideas(ideas):
-    st.subheader("Selecteer 1-3 e-mailideeën")
+    st.subheader("Select 1-3 email ideas")
     selected_ideas = []
     for i, idea in enumerate(ideas, 1):
-        if st.checkbox(f"Idee {i}", key=f"idea_checkbox_{i}"):
+        if st.checkbox(f"Idea {i}", key=f"idea_checkbox_{i}"):
             selected_ideas.append(idea)
-        st.text_area(f"Idee {i}", value=idea, height=150, key=f"idea_text_{i}")
+        st.text_area(f"Idea {i}", value=idea, height=150, key=f"idea_text_{i}")
     return selected_ideas
 
 def display_generated_emails(emails):
     for i, email in enumerate(emails, 1):
-        with st.expander(f"Gegenereerde E-mail {i}", expanded=True):
+        with st.expander(f"Generated Email {i}", expanded=True):
             try:
                 # Find the indices of the tags
                 subject_start = email.find('<subject>') + 9
@@ -103,34 +103,34 @@ def display_generated_emails(emails):
                 explanation_end = email.find('</explanation>')
 
                 # Extract the content
-                subject = email[subject_start:subject_end] if subject_start > 8 and subject_end != -1 else "Geen onderwerp"
-                sender = email[sender_start:sender_end] if sender_start > 7 and sender_end != -1 else "Onbekende afzender"
-                body = email[body_start:body_end] if body_start > 5 and body_end != -1 else "Geen inhoud"
+                subject = email[subject_start:subject_end] if subject_start > 8 and subject_end != -1 else "No subject"
+                sender = email[sender_start:sender_end] if sender_start > 7 and sender_end != -1 else "Unknown sender"
+                body = email[body_start:body_end] if body_start > 5 and body_end != -1 else "No content"
                 indicators = email[indicators_start:indicators_end].split('\n') if indicators_start > 11 and indicators_end != -1 else []
-                explanation = email[explanation_start:explanation_end] if explanation_start > 12 and explanation_end != -1 else "Geen uitleg beschikbaar"
+                explanation = email[explanation_start:explanation_end] if explanation_start > 12 and explanation_end != -1 else "No explanation available"
 
-                st.markdown(f"**Onderwerp:** {subject}")
-                st.markdown(f"**Afzender:** {sender}")
-                st.text_area("E-mailinhoud:", value=body, height=200, key=f"email_body_{i}")
+                st.markdown(f"**Subject:** {subject}")
+                st.markdown(f"**Sender:** {sender}")
+                st.text_area("Email content:", value=body, height=200, key=f"email_body_{i}")
                 
-                st.subheader("Phishing-indicatoren:")
+                st.subheader("Phishing indicators:")
                 for indicator in indicators:
                     if indicator.strip():
                         st.markdown(f"- {indicator.strip()}")
                 
-                st.subheader("Uitleg:")
+                st.subheader("Explanation:")
                 st.write(explanation)
 
-                if st.button(f"Download E-mail {i}", key=f"download_email_{i}"):
-                    email_content = f"Onderwerp: {subject}\nAfzender: {sender}\n\n{body}\n\nPhishing-indicatoren:\n"
+                if st.button(f"Download Email {i}", key=f"download_email_{i}"):
+                    email_content = f"Subject: {subject}\nSender: {sender}\n\n{body}\n\nPhishing indicators:\n"
                     email_content += '\n'.join(indicators)
-                    email_content += f"\n\nUitleg:\n{explanation}"
+                    email_content += f"\n\nExplanation:\n{explanation}"
                     st.download_button(
-                        label=f"Download E-mail {i} als tekstbestand",
+                        label=f"Download Email {i} as text file",
                         data=email_content,
                         file_name=f"phishing_email_{i}.txt",
                         mime="text/plain",
                         key=f"download_button_{i}"
                     )
             except Exception as e:
-                st.error(f"Er is een fout opgetreden bij het weergeven van e-mail {i}: {str(e)}")
+                st.error(f"An error occurred while displaying email {i}: {str(e)}")
