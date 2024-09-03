@@ -20,24 +20,20 @@ from logger import log_step, log_error, save_session_to_file
 st.set_page_config(page_title="DCC Phishing Simulatie Tool", layout="wide")
 
 # Initialize session state
-if 'initialized' not in st.session_state:
-    st.session_state.initialized = False
+if 'initialized' not in st.session_state or st.session_state.get('reset_requested', False):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.session_state.initialized = True
     st.session_state.step = 1
+    st.session_state.reset_requested = False
 
 TOTAL_STEPS = 6
 
 def reset_app():
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    st.session_state.initialized = False
-    st.session_state.step = 1
-    log_step("Session Reset")
+    st.session_state.reset_requested = True
+    st.rerun()
 
 def main():
-    if not st.session_state.initialized:
-        reset_app()
-        st.session_state.initialized = True
-
     st.title("DCC Phishing Simulatie Tool")
 
     # Sidebar
@@ -45,7 +41,6 @@ def main():
         st.write(f"Current Step: {st.session_state.step}/{TOTAL_STEPS}")
         if st.button("Reset Application", key="sidebar_reset"):
             reset_app()
-            st.rerun()
 
     display_progress_bar(st.session_state.step, TOTAL_STEPS)
 
@@ -169,7 +164,6 @@ def main():
     # Bottom reset button
     if st.button("Start Over", key="reset_button"):
         reset_app()
-        st.rerun()
 
 if __name__ == "__main__":
     main()
