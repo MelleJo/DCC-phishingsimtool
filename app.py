@@ -86,7 +86,74 @@ def main():
                 session_manager.increment_step()
                 st.rerun()
 
-    # ... [Continue with the rest of the steps, using session_manager methods] ...
+    elif session_manager.get_step() == 4:
+        st.subheader("Step 4: Research Results")
+        st.info(f"Selected business type: {session_manager.get_value('business_type')}")
+        st.info(f"Selected email type: {session_manager.get_value('internal_external')}")
+        
+        if not session_manager.get_value('research_results'):
+            with st.spinner("Conducting research..."):
+                research_query = f"{session_manager.get_value('business_type')} {' '.join(session_manager.get_value('context_answers', {}).values())}"
+                research_results = conduct_research(research_query)
+            session_manager.set_value('research_results', research_results)
+        
+        display_research_results({"Research Results": session_manager.get_value('research_results')})
+        
+        if st.button("Generate Email Ideas"):
+            log_step("Research Conducted")
+            session_manager.increment_step()
+            st.rerun()
+
+    elif session_manager.get_step() == 5:
+        st.subheader("Step 5: Select Email Ideas")
+        st.info(f"Selected business type: {session_manager.get_value('business_type')}")
+        st.info(f"Selected email type: {session_manager.get_value('internal_external')}")
+        
+        if not session_manager.get_value('email_ideas'):
+            with st.spinner("Generating email ideas..."):
+                email_ideas = generate_email_ideas(
+                    session_manager.get_value('business_type'),
+                    session_manager.get_value('internal_external'),
+                    session_manager.get_value('context_answers'),
+                    session_manager.get_value('research_results')
+                )
+            session_manager.set_value('email_ideas', email_ideas)
+        
+        selected_ideas = display_email_ideas(session_manager.get_value('email_ideas'))
+        
+        if len(selected_ideas) > 0 and len(selected_ideas) <= 3:
+            if st.button("Generate Full Emails"):
+                session_manager.set_value('selected_ideas', selected_ideas)
+                log_step("Email Ideas Selected", selected_ideas)
+                session_manager.increment_step()
+                st.rerun()
+        else:
+            st.warning("Please select 1-3 email ideas to proceed.")
+
+    elif session_manager.get_step() == 6:
+        st.subheader("Step 6: Generated Phishing Simulation Emails")
+        st.info(f"Selected business type: {session_manager.get_value('business_type')}")
+        st.info(f"Selected email type: {session_manager.get_value('internal_external')}")
+        
+        if not session_manager.get_value('generated_emails'):
+            with st.spinner("Generating full emails..."):
+                generated_emails = [
+                    generate_full_email(
+                        session_manager.get_value('business_type'),
+                        session_manager.get_value('internal_external'),
+                        session_manager.get_value('context_answers'),
+                        session_manager.get_value('research_results'),
+                        idea
+                    ) for idea in session_manager.get_value('selected_ideas')
+                ]
+            session_manager.set_value('generated_emails', generated_emails)
+        
+        display_generated_emails(session_manager.get_value('generated_emails'))
+        
+        if st.button("Save Session and Finish"):
+            session_file = save_session_to_file()
+            log_step("Session Completed and Saved", session_file)
+            st.success(f"Phishing simulation emails have been generated and the session has been saved to {session_file}!")
 
     if st.button("Start Over"):
         session_manager.reset_session()
