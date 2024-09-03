@@ -19,18 +19,18 @@ from logger import log_step, log_error, save_session_to_file
 # Set page configuration
 st.set_page_config(page_title="DCC Phishing Simulatie Tool", layout="wide")
 
+# Force reset the entire session state
+for key in list(st.session_state.keys()):
+    del st.session_state[key]
+
 # Initialize session state
-if 'initialized' not in st.session_state or st.session_state.get('reset_requested', False):
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    st.session_state.initialized = True
+if 'step' not in st.session_state:
     st.session_state.step = 1
-    st.session_state.reset_requested = False
 
 TOTAL_STEPS = 6
 
 def reset_app():
-    st.session_state.reset_requested = True
+    st.session_state.step = 1
     st.rerun()
 
 def main():
