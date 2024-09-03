@@ -22,58 +22,44 @@ from logger import log_step, log_error, save_session_to_file
 
 TOTAL_STEPS = 6
 
-def initialize_session_state():
+def init_session_state():
     if 'step' not in st.session_state:
         st.session_state.step = 1
-    if 'reset_requested' not in st.session_state:
-        st.session_state.reset_requested = False
-
-def reset_app():
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    initialize_session_state()
-    st.session_state.reset_requested = True
-    st.rerun()
 
 def main():
-    initialize_session_state()
-
-    if st.session_state.reset_requested:
-        st.session_state.step = 1
-        st.session_state.reset_requested = False
+    init_session_state()
 
     st.title("DCC Phishing Simulatie Tool")
 
     # Sidebar
     with st.sidebar:
         st.write(f"Current Step: {st.session_state.step}/{TOTAL_STEPS}")
-        if st.button("Reset Application", key="sidebar_reset"):
-            reset_app()
+        if st.button("Reset Application"):
+            st.session_state.clear()
+            st.session_state.step = 1
+            st.rerun()
 
     display_progress_bar(st.session_state.step, TOTAL_STEPS)
 
-    # Step 1: Business Type Selection
     if st.session_state.step == 1:
         st.subheader("Step 1: Select Business Type")
         business_type = display_business_categories()
         if business_type:
             st.session_state.business_type = business_type
-            log_step("Business Type Selection", st.session_state.business_type)
+            log_step("Business Type Selection", business_type)
             st.session_state.step = 2
             st.rerun()
 
-    # Step 2: Internal/External Selection
     elif st.session_state.step == 2:
         st.subheader("Step 2: Select Email Type")
         st.info(f"Selected business type: {st.session_state.business_type}")
         internal_external = display_internal_external_selection()
         if internal_external:
             st.session_state.internal_external = internal_external
-            log_step("Internal/External Selection", st.session_state.internal_external)
+            log_step("Internal/External Selection", internal_external)
             st.session_state.step = 3
             st.rerun()
 
-    # Step 3: Generate and Display Context Questions
     elif st.session_state.step == 3:
         st.subheader("Step 3: Answer Context Questions")
         st.info(f"Selected business type: {st.session_state.business_type}")
@@ -94,13 +80,12 @@ def main():
                 st.rerun()
         else:
             context_answers = display_context_questions(st.session_state.context_questions)
-            if st.button("Start Research", key="start_research_button"):
+            if st.button("Start Research"):
                 st.session_state.context_answers = context_answers
-                log_step("Context Questions", st.session_state.context_answers)
+                log_step("Context Questions", context_answers)
                 st.session_state.step = 4
                 st.rerun()
 
-    # Step 4: Conduct Research
     elif st.session_state.step == 4:
         st.subheader("Step 4: Research Results")
         st.info(f"Selected business type: {st.session_state.business_type}")
@@ -113,12 +98,11 @@ def main():
         
         display_research_results({"Research Results": st.session_state.research_results})
         
-        if st.button("Next Step", key="next_step_button"):
+        if st.button("Generate Email Ideas"):
             log_step("Research Conducted")
             st.session_state.step = 5
             st.rerun()
 
-    # Step 5: Generate and Display Email Ideas
     elif st.session_state.step == 5:
         st.subheader("Step 5: Select Email Ideas")
         st.info(f"Selected business type: {st.session_state.business_type}")
@@ -136,15 +120,14 @@ def main():
         selected_ideas = display_email_ideas(st.session_state.email_ideas)
         
         if len(selected_ideas) > 0 and len(selected_ideas) <= 3:
-            if st.button("Generate Full Emails", key="generate_full_emails_button"):
+            if st.button("Generate Full Emails"):
                 st.session_state.selected_ideas = selected_ideas
-                log_step("Email Ideas Selected", st.session_state.selected_ideas)
+                log_step("Email Ideas Selected", selected_ideas)
                 st.session_state.step = 6
                 st.rerun()
         else:
             st.warning("Please select 1-3 email ideas to proceed.")
 
-    # Step 6: Generate and Display Full Emails
     elif st.session_state.step == 6:
         st.subheader("Step 6: Generated Phishing Simulation Emails")
         st.info(f"Selected business type: {st.session_state.business_type}")
@@ -164,14 +147,15 @@ def main():
         
         display_generated_emails(st.session_state.generated_emails)
         
-        if st.button("Save Session and Finish", key="finish_button"):
+        if st.button("Save Session and Finish"):
             session_file = save_session_to_file()
             log_step("Session Completed and Saved", session_file)
             st.success(f"Phishing simulation emails have been generated and the session has been saved to {session_file}!")
 
-    # Bottom reset button
-    if st.button("Start Over", key="reset_button"):
-        reset_app()
+    if st.button("Start Over"):
+        st.session_state.clear()
+        st.session_state.step = 1
+        st.rerun()
 
 if __name__ == "__main__":
     main()
