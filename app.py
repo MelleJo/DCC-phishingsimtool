@@ -162,19 +162,68 @@ def step_6_generate_full_emails():
 
 def step_7_display_results():
     st.header("Step 7: View Generated Emails")
-    for i, email in enumerate(st.session_state.generated_emails):
-        with st.expander(f"Email {i+1}", expanded=True):
+    
+    if 'generated_emails' not in st.session_state or not st.session_state.generated_emails:
+        st.warning("No emails have been generated yet. Please complete the previous steps.")
+        return
+
+    for i, email in enumerate(st.session_state.generated_emails, 1):
+        with st.expander(f"Email {i}", expanded=True):
             display_email(email, i)
     
-    if st.button("Start Over"):
+    if st.button("Start Over", key="start_over_button"):
         reset_session()
-        st.rerun()
+        st.experimental_rerun()
 
 def display_email(email, index):
-    # Extract email components (subject, sender, body, indicators, explanation)
-    # Display each component
-    # Add a download button for the email
-    pass  # Implement this function based on your email structure
+    lines = email.split('\n')
+    subject = ""
+    sender = ""
+    body = []
+    indicators = []
+    explanation = []
+    current_section = ""
+
+    for line in lines:
+        if line.startswith("Subject:"):
+            current_section = "subject"
+            subject = line.replace("Subject:", "").strip()
+        elif line.startswith("Sender:"):
+            current_section = "sender"
+            sender = line.replace("Sender:", "").strip()
+        elif line.startswith("Phishing indicators:"):
+            current_section = "indicators"
+        elif line.startswith("Explanation:"):
+            current_section = "explanation"
+        elif current_section == "body":
+            body.append(line)
+        elif current_section == "indicators":
+            indicators.append(line)
+        elif current_section == "explanation":
+            explanation.append(line)
+        else:
+            current_section = "body"
+            body.append(line)
+
+    st.subheader(f"Email {index}")
+    st.write(f"**Subject:** {subject}")
+    st.write(f"**Sender:** {sender}")
+    st.text_area("Email Body", "\n".join(body), height=200)
+    st.write("**Phishing Indicators:**")
+    for indicator in indicators:
+        st.write(f"- {indicator}")
+    st.write("**Explanation:**")
+    st.write("\n".join(explanation))
+
+    if st.button(f"Download Email {index}", key=f"download_email_{index}"):
+        email_content = f"Subject: {subject}\nSender: {sender}\n\n{''.join(body)}\n\nPhishing Indicators:\n{''.join(indicators)}\n\nExplanation:\n{''.join(explanation)}"
+        st.download_button(
+            label=f"Download Email {index} as Text",
+            data=email_content,
+            file_name=f"phishing_email_{index}.txt",
+            mime="text/plain",
+            key=f"download_button_{index}"
+        )
 
 def reset_session():
     for key in list(st.session_state.keys()):
