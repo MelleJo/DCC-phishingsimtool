@@ -1,12 +1,18 @@
 from langchain_anthropic import ChatAnthropic
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
-from config import get_anthropic_api_key, get_config
+from config import get_anthropic_api_key, get_config, get_tavily_api_key
 from tavily import TavilyClient
 import streamlit as st
 
 # Initialize AI models and clients
-chat_model = ChatAnthropic(api_key=get_anthropic_api_key(), **get_config())
+config = get_config()
+chat_model = ChatAnthropic(
+    anthropic_api_key=get_anthropic_api_key(),
+    model_name=config['MODEL_NAME'],
+    max_tokens_to_sample=config['MAX_TOKENS'],
+    temperature=config['TEMPERATURE']
+)
 tavily_client = TavilyClient(api_key=get_tavily_api_key())
 
 def generate_context_questions(business_type, email_type):
