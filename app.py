@@ -5,6 +5,7 @@ from ai_modules import generate_context_questions, conduct_research, generate_em
 from config import get_config, update_config, reset_to_defaults
 from logger import log_step, log_error, save_session_to_file
 
+
 # Set page configuration
 st.set_page_config(page_title="Phishing Simulation Email Generator", layout="wide")
 
@@ -83,12 +84,15 @@ def step_3_answer_questions():
 
     for i, q in enumerate(st.session_state.context_questions):
         key = f"context_question_{i}"
-        st.session_state.context_answers[q] = st.text_input(q, key=key)
+        st.session_state.context_answers[q] = st.text_input(label=q, key=key)
     
-    if st.button("Next", key="context_next_button") and all(st.session_state.context_answers.values()):
-        log_step("Context questions answered")
-        st.session_state.step = 4
-        st.rerun()
+    if st.button("Next", key="context_next_button"):
+        if all(st.session_state.context_answers.values()):
+            log_step("Context questions answered")
+            st.session_state.step = 4
+            st.experimental_rerun()
+        else:
+            st.error("Please answer all questions before proceeding.")
 
 def step_4_review_research():
     st.header("Step 4: Review Research Results")
