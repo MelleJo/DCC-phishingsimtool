@@ -1,14 +1,18 @@
 import streamlit as st
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 def get_anthropic_api_key():
-    return st.secrets["ANTHROPIC_API_KEY"]
+    return os.getenv("ANTHROPIC_API_KEY") or st.secrets["ANTHROPIC_API_KEY"]
 
 def get_tavily_api_key():
-    return st.secrets["TAVILY_API_KEY"]
+    return os.getenv("TAVILY_API_KEY") or st.secrets["TAVILY_API_KEY"]
 
 DEFAULT_CONFIG = {
-    'MODEL_NAME': "claude-3-5-sonnet-20240620",
-    'MAX_TOKENS': 1000,
+    'MODEL_NAME': "claude-3-opus-20240229",
+    'MAX_TOKENS': 4000,
     'TEMPERATURE': 0.7
 }
 
@@ -21,15 +25,6 @@ def update_config(new_config):
     config = get_config()
     config.update(new_config)
     st.session_state.config = config
-
-def get_model_name():
-    return get_config()['MODEL_NAME']
-
-def get_max_tokens():
-    return get_config()['MAX_TOKENS']
-
-def get_temperature():
-    return get_config()['TEMPERATURE']
 
 def reset_to_defaults():
     st.session_state.config = DEFAULT_CONFIG.copy()

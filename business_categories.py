@@ -1,12 +1,11 @@
 # business_categories.py
 
-# Dictionary to store categories and their business types
 categories = {
-    "Financieel": ["Bank", "Verzekering", "Accountancy"],
-    "Technologie": ["Software", "Hardware", "IT Consultancy"],
-    "Gezondheidszorg": ["Ziekenhuis", "Apotheek", "Huisartsenpraktijk"],
-    "Retail": ["Supermarkt", "Kledingwinkel", "Electronicawinkel"],
-    "Onderwijs": ["Basisschool", "Middelbare school", "Universiteit"]
+    "Financial": ["Bank", "Insurance", "Accounting"],
+    "Technology": ["Software", "Hardware", "IT Consultancy"],
+    "Healthcare": ["Hospital", "Pharmacy", "General Practice"],
+    "Retail": ["Supermarket", "Clothing Store", "Electronics Store"],
+    "Education": ["Primary School", "High School", "University"]
 }
 
 def get_categories():

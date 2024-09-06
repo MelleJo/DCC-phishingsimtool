@@ -1,136 +1,180 @@
 import streamlit as st
 import streamlit_antd_components as sac
 from business_categories import get_categories, get_business_types, add_business_type
+from ai_modules import generate_context_questions, conduct_research, generate_email_ideas, generate_full_email
+from config import get_config, update_config, reset_to_defaults
+from logger import log_step, log_error, save_session_to_file
 
-def display_business_categories():
-    st.subheader("Select a business category")
+# Set page configuration
+st.set_page_config(page_title="Phishing Simulation Email Generator", layout="wide")
+
+# Initialize session state
+if 'step' not in st.session_state:
+    st.session_state.step = 1
+
+def main():
+    st.title("Phishing Simulation Email Generator")
+
+    # Display progress
+    st.progress((st.session_state.step - 1) / 6)
+    st.write(f"Step {st.session_state.step} of 7")
+
+    if st.session_state.step == 1:
+        step_1_select_business()
+    elif st.session_state.step == 2:
+        step_2_select_email_type()
+    elif st.session_state.step == 3:
+        step_3_answer_questions()
+    elif st.session_state.step == 4:
+        step_4_review_research()
+    elif st.session_state.step == 5:
+        step_5_select_email_ideas()
+    elif st.session_state.step == 6:
+        step_6_generate_full_emails()
+    elif st.session_state.step == 7:
+        step_7_display_results()
+
+def step_1_select_business():
+    st.header("Step 1: Select Business Category and Type")
+    categories = get_categories()
+    selected_category = st.selectbox("Select a business category", categories)
     
-    try:
-        categories = get_categories()
-        if not categories:
-            st.error("No business categories found. Check the business_categories.py file.")
-            return None
+    if selected_category:
+        business_types = get_business_types(selected_category)
+        selected_business = st.selectbox("Select a business type", business_types)
         
-        selected_category = sac.buttons(
-            items=[sac.ButtonsItem(label=cat) for cat in categories],
-            format_func="title",
-            key="category_buttons"
-        )
-        
-        if selected_category:
-            st.subheader("Select a business type")
-            business_types = get_business_types(selected_category)
-            if not business_types:
-                st.warning(f"No business types found for the category '{selected_category}'.")
-            else:
-                selected_business = sac.buttons(
-                    items=[sac.ButtonsItem(label=bt) for bt in business_types],
-                    format_func="title",
-                    key="business_type_buttons"
-                )
-                if selected_business:
-                    return selected_business
-    
-    except Exception as e:
-        st.error(f"An error occurred while loading business categories: {str(e)}")
-        return None
-    
-    # Option to add a new business type
-    with st.expander("Add a new business type"):
-        new_category = st.selectbox("Select a category", categories, key="new_category_select")
-        new_business_type = st.text_input("Enter the new business type", key="new_business_type_input")
-        if st.button("Add", key="add_business_type_button") and new_business_type:
-            try:
-                add_business_type(new_category, new_business_type)
-                st.success(f"Business type '{new_business_type}' added to category '{new_category}'")
+        if selected_business:
+            st.session_state.business_type = selected_business
+            if st.button("Next"):
+                log_step("Business selected", selected_business)
+                st.session_state.step = 2
                 st.rerun()
-            except Exception as e:
-                st.error(f"Error adding the new business type: {str(e)}")
 
-    return None
-
-def display_internal_external_selection():
-    st.subheader("Select the type of email")
-    return st.radio(
-        "Email type",
+def step_2_select_email_type():
+    st.header("Step 2: Select Email Type")
+    st.write(f"Selected business type: {st.session_state.business_type}")
+    
+    email_type = st.radio(
+        "Select the type of email",
         ["Internal", "External"],
-        format_func=lambda x: f"{x} - {'Email from a colleague or manager' if x == 'Internal' else 'Email from a customer, government, IT provider, etc.'}",
-        key="internal_external_radio"
+        format_func=lambda x: f"{x} - {'Email from a colleague or manager' if x == 'Internal' else 'Email from a customer, government, IT provider, etc.'}"
     )
+    
+    if st.button("Next"):
+        st.session_state.email_type = email_type
+        log_step("Email type selected", email_type)
+        st.session_state.step = 3
+        st.rerun()
 
-def display_context_questions(questions):
-    st.subheader("Answer the following questions")
-    answers = {}
-    for i, q in enumerate(questions):
-        answers[q] = st.text_input(q, key=f"context_question_{i}")
-    return answers
+def step_3_answer_questions():
+    st.header("Step 3: Answer Context Questions")
+    st.write(f"Selected business type: {st.session_state.business_type}")
+    st.write(f"Selected email type: {st.session_state.email_type}")
+    
+    if 'context_questions' not in st.session_state:
+        with st.spinner("Generating context questions..."):
+            st.session_state.context_questions = generate_context_questions(
+                st.session_state.business_type,
+                st.session_state.email_type
+            )
+    
+    st.session_state.context_answers = {}
+    for q in st.session_state.context_questions:
+        st.session_state.context_answers[q] = st.text_input(q)
+    
+    if st.button("Next") and all(st.session_state.context_answers.values()):
+        log_step("Context questions answered")
+        st.session_state.step = 4
+        st.rerun()
 
-def display_research_results(research_results):
-    st.subheader("Research Results")
-    for category, results in research_results.items():
-        with st.expander(f"{category} Information"):
-            for item in results:
-                st.write(f"- {item}")
+def step_4_review_research():
+    st.header("Step 4: Review Research Results")
+    st.write(f"Selected business type: {st.session_state.business_type}")
+    st.write(f"Selected email type: {st.session_state.email_type}")
+    
+    if 'research_results' not in st.session_state:
+        with st.spinner("Conducting research..."):
+            research_query = f"{st.session_state.business_type} {' '.join(st.session_state.context_answers.values())}"
+            st.session_state.research_results = conduct_research(research_query)
+    
+    for result in st.session_state.research_results:
+        st.write(result)
+    
+    if st.button("Next"):
+        log_step("Research reviewed")
+        st.session_state.step = 5
+        st.rerun()
 
-def display_progress_bar(current_step, total_steps):
-    progress = (current_step - 1) / (total_steps - 1)
-    st.progress(progress)
-    st.write(f"Step {current_step} of {total_steps}")
+def step_5_select_email_ideas():
+    st.header("Step 5: Select Email Ideas")
+    st.write(f"Selected business type: {st.session_state.business_type}")
+    st.write(f"Selected email type: {st.session_state.email_type}")
+    
+    if 'email_ideas' not in st.session_state:
+        with st.spinner("Generating email ideas..."):
+            st.session_state.email_ideas = generate_email_ideas(
+                st.session_state.business_type,
+                st.session_state.email_type,
+                st.session_state.context_answers,
+                st.session_state.research_results
+            )
+    
+    st.session_state.selected_ideas = []
+    for i, idea in enumerate(st.session_state.email_ideas):
+        if st.checkbox(f"Idea {i+1}", key=f"idea_{i}"):
+            st.session_state.selected_ideas.append(idea)
+        st.text_area(f"Idea {i+1}", value=idea, height=100, key=f"idea_text_{i}")
+    
+    if st.button("Generate Emails") and len(st.session_state.selected_ideas) > 0:
+        log_step("Email ideas selected", st.session_state.selected_ideas)
+        st.session_state.step = 6
+        st.rerun()
 
-def display_email_ideas(ideas):
-    st.subheader("Select 1-3 email ideas")
-    selected_ideas = []
-    for i, idea in enumerate(ideas, 1):
-        if st.checkbox(f"Idea {i}", key=f"idea_checkbox_{i}"):
-            selected_ideas.append(idea)
-        st.text_area(f"Idea {i}", value=idea, height=150, key=f"idea_text_{i}")
-    return selected_ideas
+def step_6_generate_full_emails():
+    st.header("Step 6: Generate Full Emails")
+    st.write(f"Selected business type: {st.session_state.business_type}")
+    st.write(f"Selected email type: {st.session_state.email_type}")
+    
+    if 'generated_emails' not in st.session_state:
+        with st.spinner("Generating full emails..."):
+            st.session_state.generated_emails = []
+            for idea in st.session_state.selected_ideas:
+                email = generate_full_email(
+                    st.session_state.business_type,
+                    st.session_state.email_type,
+                    st.session_state.context_answers,
+                    st.session_state.research_results,
+                    idea
+                )
+                st.session_state.generated_emails.append(email)
+    
+    if st.button("View Results"):
+        log_step("Emails generated")
+        st.session_state.step = 7
+        st.rerun()
 
-def display_generated_emails(emails):
-    for i, email in enumerate(emails, 1):
-        with st.expander(f"Generated Email {i}", expanded=True):
-            try:
-                # Find the indices of the tags
-                subject_start = email.find('<subject>') + 9
-                subject_end = email.find('</subject>')
-                sender_start = email.find('<sender>') + 8
-                sender_end = email.find('</sender>')
-                body_start = email.find('<body>') + 6
-                body_end = email.find('</body>')
-                indicators_start = email.find('<indicators>') + 12
-                indicators_end = email.find('</indicators>')
-                explanation_start = email.find('<explanation>') + 13
-                explanation_end = email.find('</explanation>')
+def step_7_display_results():
+    st.header("Step 7: View Generated Emails")
+    for i, email in enumerate(st.session_state.generated_emails):
+        with st.expander(f"Email {i+1}", expanded=True):
+            display_email(email, i)
+    
+    if st.button("Start Over"):
+        reset_session()
+        st.rerun()
 
-                # Extract the content
-                subject = email[subject_start:subject_end] if subject_start > 8 and subject_end != -1 else "No subject"
-                sender = email[sender_start:sender_end] if sender_start > 7 and sender_end != -1 else "Unknown sender"
-                body = email[body_start:body_end] if body_start > 5 and body_end != -1 else "No content"
-                indicators = email[indicators_start:indicators_end].split('\n') if indicators_start > 11 and indicators_end != -1 else []
-                explanation = email[explanation_start:explanation_end] if explanation_start > 12 and explanation_end != -1 else "No explanation available"
+def display_email(email, index):
+    # Extract email components (subject, sender, body, indicators, explanation)
+    # Display each component
+    # Add a download button for the email
+    pass  # Implement this function based on your email structure
 
-                st.markdown(f"**Subject:** {subject}")
-                st.markdown(f"**Sender:** {sender}")
-                st.text_area("Email content:", value=body, height=200, key=f"email_body_{i}")
-                
-                st.subheader("Phishing indicators:")
-                for indicator in indicators:
-                    if indicator.strip():
-                        st.markdown(f"- {indicator.strip()}")
-                
-                st.subheader("Explanation:")
-                st.write(explanation)
+def reset_session():
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.session_state.step = 1
+    reset_to_defaults()
+    log_step("Session reset")
 
-                if st.button(f"Download Email {i}", key=f"download_email_{i}"):
-                    email_content = f"Subject: {subject}\nSender: {sender}\n\n{body}\n\nPhishing indicators:\n"
-                    email_content += '\n'.join(indicators)
-                    email_content += f"\n\nExplanation:\n{explanation}"
-                    st.download_button(
-                        label=f"Download Email {i} as text file",
-                        data=email_content,
-                        file_name=f"phishing_email_{i}.txt",
-                        mime="text/plain",
-                        key=f"download_button_{i}"
-                    )
-            except Exception as e:
-                st.error(f"An error occurred while displaying email {i}: {str(e)}")
+if __name__ == "__main__":
+    main()
