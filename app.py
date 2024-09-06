@@ -78,11 +78,14 @@ def step_3_answer_questions():
                 st.session_state.email_type
             )
     
-    st.session_state.context_answers = {}
-    for q in st.session_state.context_questions:
-        st.session_state.context_answers[q] = st.text_input(q)
+    if 'context_answers' not in st.session_state:
+        st.session_state.context_answers = {}
+
+    for i, q in enumerate(st.session_state.context_questions):
+        key = f"context_question_{i}"
+        st.session_state.context_answers[q] = st.text_input(q, key=key)
     
-    if st.button("Next") and all(st.session_state.context_answers.values()):
+    if st.button("Next", key="context_next_button") and all(st.session_state.context_answers.values()):
         log_step("Context questions answered")
         st.session_state.step = 4
         st.rerun()
