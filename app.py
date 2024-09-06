@@ -90,7 +90,7 @@ def step_3_answer_questions():
         if all(st.session_state.context_answers.values()):
             log_step("Context questions answered")
             st.session_state.step = 4
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Please answer all questions before proceeding.")
 
